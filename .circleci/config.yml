@@ -1,0 +1,59 @@
+version: 2.1
+
+workflows:
+  my-workflow:
+    jobs:
+      - build_test:
+          context:
+            # the twine context makes the twine username and password
+            # available to all projects
+            - twine
+
+orbs:
+  # for use of the python orb, see:
+  # https://circleci.com/developer/orbs/orb/circleci/python
+  python: circleci/python@2.1.1
+  # for use of the codecov orb, see:
+  # https://circleci.com/developer/orbs/orb/codecov/codecov
+  # Code coverage is also saved as build artifacts
+  # https://circleci.com/docs/code-coverage/
+  codecov: codecov/codecov@3.2.5
+
+jobs:
+  build_test:
+    docker:
+      - image: cimg/python:3.11.0
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - run:
+          name: install dependencies
+          command: |
+            wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+            chmod +x miniconda.sh && ./miniconda.sh -b -p ~/miniconda
+            export PATH="~/miniconda/bin:$PATH"
+            conda update --yes --quiet conda
+            conda create -n testenv --yes --quiet python=3
+            source activate testenv
+            conda install --yes pip numpy pandas scipy scikit-learn matplotlib sphinx sphinx_rtd_theme numpydoc pillow pandoc
+            pip install sphinx-gallery nbsphinx
+            pip install .
+            cd doc
+            make html
+            cd ..
+            python3 setup.py sdist bdist_wheel
+            sudo add-apt-repository universe -y
+            sudo apt-get update
+            sudo apt install -y python3-pip
+            sudo pip install pipenv
+            pipenv install twine
+            pipenv run twine upload dist/*
+      - store_artifacts:
+          path: doc/_build/html/
+          destination: doc
+      - store_artifacts:
+          path: ~/log.txt
+      - run: ls -ltrh doc/_build/html
+      # See the codecov guide:
+      # https://circleci.com/developer/orbs/orb/codecov/codecov
+      - codecov/upload
