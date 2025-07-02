@@ -20,29 +20,25 @@ jobs:
       - checkout
       - python/install-packages:
           pkg-manager: pip
-          args: |
-            numpy pandas scipy scikit-learn matplotlib sphinx sphinx_rtd_theme numpydoc pillow pandoc sphinx-gallery nbsphinx twine
+          args: pytest pytest-cov twine sphinx sphinx_rtd_theme
       - run:
-          name: Install project and build documentation
+          name: Verify Python version
+          command: python3 --version
+      - run:
+          name: Run tests
+          command: pytest --cov=./ --cov-report=xml
+      - run:
+          name: Build documentation
           command: |
-            python3 -m pip install --upgrade pip
-            pip install .
             cd doc
             make html
             cd ..
       - run:
-          name: Run tests
-          command: |
-            pip install pytest pytest-cov
-            pytest --cov=./ --cov-report=xml
-      - run:
           name: Build distribution packages
-          command: |
-            python3 setup.py sdist bdist_wheel
+          command: python3 setup.py sdist bdist_wheel
       - run:
           name: Upload to PyPI
-          command: |
-            python3 -m twine upload dist/* --verbose
+          command: python3 -m twine upload dist/* --verbose
       - store_artifacts:
           path: doc/_build/html/
           destination: doc
