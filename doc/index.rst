@@ -4,12 +4,15 @@
 Welcome to bib-ami's documentation!
 ===================================
 
-**bib-ami** is a Python tool to merge, deduplicate, and clean BibTeX files. It consolidates `.bib` files from a directory, removes duplicate entries, validates DOIs, scrapes missing DOIs using CrossRef/DataCite APIs, and refreshes metadata for accurate citations.
+**bib-ami** is a Python tool to merge, deduplicate, and clean BibTeX files. It consolidates `.bib` files from a directory, removes duplicate entries, validates DOIs, scrapes missing DOIs using CrossRef/DataCite APIs, and refreshes metadata for accurate citations, especially for AI-generated references.
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+   background
+   workflow
+   architecture
    usage
 
 Indices and tables
