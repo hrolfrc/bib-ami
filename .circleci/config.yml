@@ -10,7 +10,7 @@ workflows:
 
 orbs:
   python: circleci/python@2.1.1
-  codecov: codecov/codecov@5  # Using latest orb version
+  codecov: codecov/codecov@5
 
 jobs:
   build_test:
@@ -25,7 +25,7 @@ jobs:
             ls -l README.md setup.py bib_ami/bib_ami.py || exit 1
       - python/install-packages:
           pkg-manager: pip
-          args: pytest pytest-cov twine sphinx sphinx_rtd_theme bibtexparser requests fuzzywuzzy python-Levenshtein
+          args: pytest pytest-cov twine sphinx sphinx_rtd_theme bibtexparser requests fuzzywuzzy python-Levenshtein build
       - run:
           name: Verify Python version
           command: python3 --version
@@ -40,7 +40,7 @@ jobs:
             cd ..
       - run:
           name: Build distribution packages
-          command: python3 setup.py sdist bdist_wheel
+          command: python3 -m build
       - run:
           name: Upload to PyPI
           command: python3 -m twine upload dist/* --verbose
