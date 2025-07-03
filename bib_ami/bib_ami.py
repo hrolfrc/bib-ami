@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""bib_clean: A tool to consolidate and clean BibTeX files.
+"""bib_ami: A tool to consolidate and clean BibTeX files.
 
 This script merges all .bib files from a specified directory into a single output file.
 Future versions will include deduplication, DOI validation, and metadata refreshing.
@@ -78,7 +78,7 @@ def refresh_metadata(input_file: str, output_file: str) -> None:
 
 
 def main():
-    """Parse command-line arguments and run bib-clean."""
+    """Parse command-line arguments and run bib-ami."""
     parser = argparse.ArgumentParser(
         description="Merge BibTeX files from a directory into a single file."
     )

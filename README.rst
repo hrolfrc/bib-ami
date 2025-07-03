@@ -2,11 +2,11 @@
 
 |CircleCI|_ |ReadTheDocs|_
 
-.. |CircleCI| image:: https://circleci.com/gh/hrolfrc/bib-clean.svg?style=shield
-.. _CircleCI: https://circleci.com/gh/hrolfrc/bib-clean
+.. |CircleCI| image:: https://circleci.com/gh/hrolfrc/bib-ami.svg?style=shield
+.. _CircleCI: https://circleci.com/gh/hrolfrc/bib-ami
 
-.. |ReadTheDocs| image:: https://readthedocs.org/projects/bib-clean/badge/?version=latest
-.. _ReadTheDocs: https://bib-clean.readthedocs.io/en/latest/?badge=latest
+.. |ReadTheDocs| image:: https://readthedocs.org/projects/bib-ami/badge/?version=latest
+.. _ReadTheDocs: https://bib-ami.readthedocs.io/en/latest/?badge=latest
 
 BibClean
 #####################################
@@ -21,15 +21,15 @@ Install
 ------------------
 Use pip to install calfcv.
 
-``pip install bib-clean``
+``pip install bib-ami``
 
 Introduction
 ------------------
-This is the bib-clean project.
+This is the bib-ami project.
 
 Example
 ===========
 
 .. code:: ipython2
 
-    from bib-clean import bib_clean
+    from bib-ami import bib_ami

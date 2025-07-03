@@ -1,6 +1,6 @@
 # Configuration file for the Sphinx documentation builder.
 
-project = 'bib-clean'
+project = 'bib-ami'
 copyright = '2025, Rolf Carlson'
 author = 'Rolf Carlson'
 release = '0.0.1'

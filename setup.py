@@ -1,13 +1,13 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="bib-clean",
+    name="bib-ami",
     version="0.0.1",
     packages=find_packages(),
     install_requires=[],
     entry_points={
         "console_scripts": [
-            "bib-clean = bib_clean.bib_clean:main",
+            "bib-ami = bib_ami.bib_ami:main",
         ],
     },
     author="Rolf Carlson",
@@ -15,7 +15,7 @@ setup(
     description="A tool to merge and clean BibTeX files.",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    url="https://github.com/hrolfrc/bib-clean",
+    url="https://github.com/hrolfrc/bib-ami",
     license="MIT",
     classifiers=[
         "Programming Language :: Python :: 3",

@@ -1,7 +1,7 @@
 import tempfile
 from pathlib import Path
 
-from bib_clean.bib_clean import merge_bib_files
+from bib_ami.bib_ami import merge_bib_files
 
 
 # noinspection SpellCheckingInspection

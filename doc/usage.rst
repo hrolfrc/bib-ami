@@ -1,17 +1,17 @@
 Usage
 =====
 
-Install bib-clean via PyPI:
+Install bib-ami via PyPI:
 
 .. code-block:: bash
 
-   pip install bib-clean
+   pip install bib-ami
 
 Merge all `.bib` files in a directory:
 
 .. code-block:: bash
 
-   bib-clean --input-dir path/to/bib/files --output-file merged.bib
+   bib-ami --input-dir path/to/bib/files --output-file merged.bib
 
 Arguments:
 - ``--input-dir``: Directory containing `.bib` files (default: current directory).
