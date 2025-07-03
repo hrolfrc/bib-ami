@@ -1,6 +1,6 @@
 # bib-ami
 
-A Python tool to merge and clean BibTeX files. Currently, it consolidates all `.bib` files from a directory into a single output file. Future versions will include deduplication, DOI validation, and metadata refreshing.
+A Python tool to merge, deduplicate, and clean BibTeX files. It consolidates `.bib` files from a directory, removes duplicate entries, validates DOIs, scrapes missing DOIs using CrossRef/DataCite APIs, and refreshes metadata for accurate citations.
 
 ## Installation
 ```bash

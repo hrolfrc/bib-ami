@@ -1,10 +1,23 @@
 from setuptools import setup, find_packages
 
+# Read README.md, with fallback if not found
+try:
+    with open("README.md", "r", encoding="utf-8") as f:
+        long_description = f.read()
+except FileNotFoundError:
+    long_description = "A tool to merge and clean BibTeX files."
+
+# noinspection PyUnboundLocalVariable
 setup(
     name="bib-ami",
-    version="0.0.1",
+    version="0.2.0",  # Updated version for new features
     packages=find_packages(),
-    install_requires=[],
+    install_requires=[
+        "bibtexparser>=1.4.1",
+        "requests>=2.31.0",
+        "fuzzywuzzy>=0.18.0",
+        "python-Levenshtein>=0.25.0",
+    ],
     entry_points={
         "console_scripts": [
             "bib-ami = bib_ami.bib_ami:main",
@@ -12,10 +25,10 @@ setup(
     },
     author="Rolf Carlson",
     author_email="hrolfrc@gmail.com",
-    description="A tool to merge and clean BibTeX files.",
-    long_description=open("README.md").read(),
+    description="A tool to merge, deduplicate, and clean BibTeX files with DOI validation.",
+    long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/hrolfrc/bib-ami",
+    url="https://github.com/yourusername/bib-ami",
     license="MIT",
     classifiers=[
         "Programming Language :: Python :: 3",
