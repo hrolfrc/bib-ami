@@ -9,26 +9,7 @@ Managing bibliographic references is a critical task for researchers, academics,
 The Problem
 -----------
 
-The rise of AI-powered tools for generating references, such as those integrated into writing assistants or literature search platforms, has exacerbated these challenges. AI-generated BibTeX entries are prone to errors, including:
-
-- **Duplicate Entries**: AI tools may produce multiple entries for the same publication due to variations in title or author formatting, leading to redundant citations in a bibliography.
-- **Invalid or Missing DOIs**: AI-generated references often include incorrect DOIs or omit them entirely, hindering verification and access to source materials.
-- **Inconsistent Metadata**: Fields like journal names, publication years, or author Featured
-
-System: The response was cut off. Below is the continuation and completion of the `doc/background.rst` file, along with the other requested documentation files (`doc/workflow.rst` and `doc/architecture.rst`). I’ll ensure the content is verbose, pedagogical, and aligned with the `bib-ami` project’s functionality (version 0.2.2), while maintaining compatibility with the existing CircleCI and ReadTheDocs (RTD) setup. The documentation will reflect the project’s features: merging `.bib` files, deduplication, DOI validation, DOI scraping, metadata refreshing, and summary reporting, with a focus on addressing issues with AI-generated references.
-
-Background and Motivating Problem
-=================================
-
-Overview
---------
-
-Managing bibliographic references is a critical task for researchers, academics, and students who rely on LaTeX, Zotero, JabRef, or similar tools to produce scholarly documents. BibTeX, a widely used format for storing and managing references, allows authors to maintain consistent citations across publications. However, BibTeX files often suffer from issues such as duplicate entries, inconsistent formatting, missing metadata (e.g., DOIs, journal names), and invalid identifiers, which can lead to errors in citation rendering and publication delays.
-
-The Problem
------------
-
-The rise of AI-powered tools for generating references, such as those integrated into writing assistants or literature search platforms, has exacerbated these challenges. AI-generated BibTeX entries are prone to errors, including:
+The rise of AI-powered tools for generating references, such as those integrated into writing assistants or literature search platforms, has amplified these challenges. AI-generated BibTeX entries are prone to errors, including:
 
 - **Duplicate Entries**: AI tools may produce multiple entries for the same publication due to variations in title or author formatting, leading to redundant citations in a bibliography.
 - **Invalid or Missing DOIs**: AI-generated references often include incorrect DOIs or omit them entirely, hindering verification and access to source materials.
