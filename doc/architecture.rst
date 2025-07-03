@@ -32,9 +32,11 @@ Components
 5. **DOI Processing**:
    - **Library**: ``requests`` for HTTP requests to the CrossRef API.
    - **Functions**:
+
       - ``validate_doi``: Sends GET requests to ``https://api.crossref.org/works/{doi}`` to check DOI validity.
       - ``scrape_doi``: Queries ``https://api.crossref.org/works`` with title/author to find missing DOIs.
       - ``refresh_metadata``: Retrieves updated metadata (title, author, journal, year) for valid DOIs.
+
    - **Purpose**: Ensures accurate, verifiable DOIs and complete metadata, critical for academic citations.
 
 6. **Summary Reporting**:
