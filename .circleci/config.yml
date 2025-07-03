@@ -6,6 +6,7 @@ workflows:
       - build_test:
           context:
             - twine  # Provides TWINE_USERNAME and TWINE_PASSWORD
+            - codecov  # Provides CODECOV_TOKEN
 
 orbs:
   python: circleci/python@2.1.1
@@ -50,3 +51,4 @@ jobs:
           path: coverage.xml
       - codecov/upload:
           file: coverage.xml
+          token: $CODECOV_TOKEN
