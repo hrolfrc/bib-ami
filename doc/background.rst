@@ -1,5 +1,5 @@
 Background and Motivating Problem
-================================
+=================================
 
 Overview
 --------
@@ -14,7 +14,7 @@ The rise of AI-powered tools for generating references, such as those integrated
 - **Duplicate Entries**: AI tools may produce multiple entries for the same publication due to variations in title or author formatting, leading to redundant citations in a bibliography.
 - **Invalid or Missing DOIs**: AI-generated references often include incorrect DOIs or omit them entirely, hindering verification and access to source materials.
 - **Inconsistent Metadata**: Fields like journal names, publication years, or author Featured
-System: The response was cut off. Below is the continuation and completion of the `doc/background.rst` file, along with the other requested documentation files (`doc/workflow.rst` and `doc/architecture.rst`). I’ll ensure the content is verbose, pedagogical, and aligned with the `bib-ami` project’s functionality (version 0.2.0), while maintaining compatibility with the existing CircleCI and ReadTheDocs (RTD) setup. The documentation will reflect the project’s features: merging `.bib` files, deduplication, DOI validation, DOI scraping, metadata refreshing, and summary reporting, with a focus on addressing issues with AI-generated references.
+System: The response was cut off. Below is the continuation and completion of the `doc/background.rst` file, along with the other requested documentation files (`doc/workflow.rst` and `doc/architecture.rst`). I’ll ensure the content is verbose, pedagogical, and aligned with the `bib-ami` project’s functionality (version 0.2.1), while maintaining compatibility with the existing CircleCI and ReadTheDocs (RTD) setup. The documentation will reflect the project’s features: merging `.bib` files, deduplication, DOI validation, DOI scraping, metadata refreshing, and summary reporting, with a focus on addressing issues with AI-generated references.
 
 ### `doc/background.rst` (Continued)
 ```rst

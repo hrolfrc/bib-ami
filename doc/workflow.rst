@@ -7,7 +7,7 @@ Overview
 The `bib-ami` tool follows a structured workflow to consolidate, clean, and enhance BibTeX files, addressing common issues such as duplicates, invalid DOIs, and incomplete metadata. This workflow is designed to be intuitive for researchers, students, and academics who use BibTeX in LaTeX, Zotero, or JabRef workflows, particularly when dealing with error-prone AI-generated references. The process is automated to minimize manual effort, ensuring high-quality citations suitable for publication in journals like *eLife*.
 
 Step-by-Step Workflow
---------------------
+---------------------
 
 1. **Merging BibTeX Files**:
    - **Input**: A directory containing one or more `.bib` files, which may come from various sources (e.g., AI tools, manual exports from Zotero or JabRef).
