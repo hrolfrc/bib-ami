@@ -14,6 +14,7 @@ Welcome to bib-ami's documentation!
    workflow
    architecture
    usage
+   citation
 
 Indices and tables
 ==================

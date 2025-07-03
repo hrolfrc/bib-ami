@@ -9,7 +9,7 @@ and generates a summary report.
 import argparse
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import bibtexparser
 import requests
@@ -147,60 +147,112 @@ def validate_doi(doi: str) -> bool:
         return False
 
 
-def scrape_doi(entry: Dict) -> Optional[str]:
-    """Scrape a DOI for a BibTeX entry using CrossRef API.
+def scrape_doi(entry, timeout=15, max_retries=3):
+    """
+    Scrape DOI for a given BibTeX entry using CrossRef API with retries.
 
     Args:
-        entry (Dict): BibTeX entry dictionary.
+        entry (dict): BibTeX entry dictionary.
+        timeout (int): Timeout for API requests in seconds.
+        max_retries (int): Maximum number of retries for failed requests.
 
     Returns:
-        Optional[str]: Found DOI or None.
+        str or None: DOI if found, else None.
     """
     title = entry.get("title", "")
-    author = entry.get("author", "").split(" and ")[0] if entry.get("author") else ""
     if not title:
-        logger.warning(f"Skipping DOI scrape for entry without title: {entry.get('ID', 'unknown')}")
+        logging.warning(f"No title found for entry {entry.get('ID', 'unknown')}")
         return None
 
-    try:
-        params = {"query.title": title, "query.author": author, "rows": 1}
-        response = requests.get("https://api.crossref.org/works", params=params, timeout=5)
-        if response.status_code == 200:
+    url = f"https://api.crossref.org/works?query.bibliographic={title}"
+    headers = {"User-Agent": "bib-ami/0.2.2 (mailto:your.email@example.com)"}
+
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(url, headers=headers, timeout=timeout)
+            response.raise_for_status()
             data = response.json()
             items = data.get("message", {}).get("items", [])
-            if items and "DOI" in items[0]:
-                return items[0]["DOI"]
-    except RequestException as e:
-        logger.warning(f"Failed to scrape DOI for '{title}': {e}")
+            if items:
+                return items[0].get("DOI")
+            logging.warning(f"No DOI found for '{title}'")
+            return None
+        except requests.exceptions.Timeout:
+            logging.warning(f"Attempt {attempt + 1} timed out for '{title}'")
+            if attempt + 1 == max_retries:
+                logging.warning(f"Failed to scrape DOI for '{title}' after {max_retries} attempts")
+                return None
+        except requests.exceptions.RequestException as e:
+            logging.warning(f"Request error for '{title}': {e}")
+            if attempt + 1 == max_retries:
+                logging.warning(f"Failed to scrape DOI for '{title}' after {max_retries} attempts")
+                return None
     return None
 
 
-def refresh_metadata(entry: Dict, doi: str) -> Dict:
-    """Refresh BibTeX entry metadata using CrossRef API.
+def refresh_metadata(entry, doi, timeout=15, max_retries=3):
+    """
+    Refresh BibTeX entry metadata using CrossRef API with retries.
 
     Args:
-        entry (Dict): Original BibTeX entry.
+        entry (dict): Original BibTeX entry.
         doi (str): DOI to fetch metadata for.
+        timeout (int): Timeout for API requests in seconds.
+        max_retries (int): Maximum number of retries for failed requests.
 
     Returns:
-        Dict: Updated BibTeX entry.
+        dict: Updated BibTeX entry with refreshed metadata.
     """
-    try:
-        response = requests.get(f"https://api.crossref.org/works/{doi}", timeout=5)
-        if response.status_code == 200:
+    if not doi:
+        return entry
+
+    new_entry = entry.copy()
+    url = f"https://api.crossref.org/works/{doi}"
+    headers = {"User-Agent": "bib-ami/0.2.2 (mailto:your.email@example.com)"}
+
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(url, headers=headers, timeout=timeout)
+            response.raise_for_status()
             data = response.json().get("message", {})
-            new_entry = entry.copy()
-            new_entry["title"] = data.get("title", [entry.get("title", "")])[0]
-            new_entry["author"] = " and ".join(
-                author.get("given", "") + " " + author.get("family", "")
-                for author in data.get("author", [])
-            ).strip()
-            new_entry["journal"] = data.get("container-title", [entry.get("journal", "")])[0]
-            new_entry["year"] = str(data.get("published", {}).get("date-parts", [[entry.get("year", "")]])[0][0])
+
+            # Handle title (list or string)
+            title = data.get("title", [entry.get("title", "")])
+            new_entry["title"] = title[0] if isinstance(title, list) and title else title if isinstance(title, str) else entry.get("title", "")
+
+            # Handle authors
+            authors = data.get("author", [])
+            if authors:
+                author_list = [
+                    f"{a.get('given', '')} {a.get('family', '')}".strip()
+                    for a in authors
+                    if a.get("given") or a.get("family")
+                ]
+                new_entry["author"] = " and ".join(author_list) if author_list else entry.get("author", "")
+
+            # Handle the journal (container-title, may be a list, string, or missing)
+            container_title = data.get("container-title", entry.get("journal", ""))
+            if isinstance(container_title, list):
+                new_entry["journal"] = container_title[0] if container_title else entry.get("journal", "")
+            else:
+                new_entry["journal"] = container_title if container_title else entry.get("journal", "")
+
+            # Handle year
+            published = data.get("published", {}).get("date-parts", [[None]])[0][0]
+            new_entry["year"] = str(published) if published else entry.get("year", "")
+
             new_entry["doi"] = doi
             return new_entry
-    except RequestException as e:
-        logger.warning(f"Failed to refresh metadata for DOI '{doi}': {e}")
+        except requests.exceptions.Timeout:
+            logging.warning(f"Attempt {attempt + 1} timed out for DOI {doi}")
+            if attempt + 1 == max_retries:
+                logging.warning(f"Failed to refresh metadata for DOI {doi} after {max_retries} attempts")
+                return entry
+        except requests.exceptions.RequestException as e:
+            logging.warning(f"Request error for DOI {doi}: {e}")
+            if attempt + 1 == max_retries:
+                logging.warning(f"Failed to refresh metadata for DOI {doi} after {max_retries} attempts")
+                return entry
     return entry
 
 

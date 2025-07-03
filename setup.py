@@ -10,7 +10,7 @@ except FileNotFoundError:
 # noinspection PyUnboundLocalVariable
 setup(
     name="bib_ami",
-    version="0.2.9",  # Updated version for new features
+    version="0.2.11",  # Updated version for new features
     packages=find_packages(),
     install_requires=[
         "bibtexparser>=1.4.1",
@@ -28,7 +28,7 @@ setup(
     description="A tool to merge, deduplicate, and clean BibTeX files with DOI validation.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/bib-ami",
+    url="https://github.com/hrolfrc/bib-ami",
     license="MIT",
     classifiers=[
         "Programming Language :: Python :: 3",

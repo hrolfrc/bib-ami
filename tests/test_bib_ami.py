@@ -3,6 +3,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import bibtexparser
+import requests
 
 from bib_ami.bib_ami import merge_bib_files, load_bib_file, deduplicate_bibtex, validate_doi, scrape_doi, \
     refresh_metadata
@@ -38,6 +39,20 @@ def test_merge_bib_files_no_bib_files():
         assert not output.exists()
 
 
+# noinspection SpellCheckingInspection,PyBroadException
+def test_merge_bib_files_invalid_bib():
+    """Test merge_bib_files with an invalid .bib file."""
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        bib1 = Path(tmpdirname) / "test1.bib"
+        output = Path(tmpdirname) / "output.bib"
+        with bib1.open("w", encoding="utf-8") as f:
+            f.write("invalid BibTeX content")
+        try:
+            merge_bib_files(tmpdirname, str(output))
+        except Exception:
+            assert not output.exists()
+
+
 # noinspection SpellCheckingInspection
 def test_load_bib_file():
     """Test loading a BibTeX file into a BibDatabase."""
@@ -49,6 +64,17 @@ def test_load_bib_file():
         assert len(database.entries) == 1
         assert database.entries[0]["ID"] == "test1"
         assert database.entries[0]["title"] == "Test 1"
+
+
+# noinspection SpellCheckingInspection
+def test_load_bib_file_empty():
+    """Test loading an empty BibTeX file."""
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        bib_file = Path(tmpdirname) / "test.bib"
+        with bib_file.open("w", encoding="utf-8") as f:
+            f.write("")
+        database = load_bib_file(str(bib_file))
+        assert len(database.entries) == 0
 
 
 def test_deduplicate_bibtex():
@@ -82,7 +108,15 @@ def test_validate_doi_invalid(mock_get):
 
 
 @patch("bib_ami.bib_ami.requests.get")
-def test_scrape_doi(mock_get):
+def test_validate_doi_timeout(mock_get):
+    """Test DOI validation with a timeout error."""
+    mock_get.side_effect = requests.exceptions.Timeout
+    result = validate_doi("10.1000/xyz123")
+    assert result is False
+
+
+@patch("bib_ami.bib_ami.requests.get")
+def test_scrape_doi_success(mock_get):
     """Test scraping a DOI from CrossRef."""
     mock_get.return_value.status_code = 200
     mock_get.return_value.json.return_value = {
@@ -94,7 +128,26 @@ def test_scrape_doi(mock_get):
 
 
 @patch("bib_ami.bib_ami.requests.get")
-def test_refresh_metadata(mock_get):
+def test_scrape_doi_no_results(mock_get):
+    """Test scraping DOI when no results are found."""
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.json.return_value = {"message": {"items": []}}
+    entry = {"title": "Machine Learning", "author": "Smith, John", "ID": "test1"}
+    doi = scrape_doi(entry)
+    assert doi is None
+
+
+@patch("bib_ami.bib_ami.requests.get")
+def test_scrape_doi_timeout(mock_get):
+    """Test scraping DOI with timeout and retries."""
+    mock_get.side_effect = requests.exceptions.Timeout
+    entry = {"title": "Machine Learning", "author": "Smith, John", "ID": "test1"}
+    doi = scrape_doi(entry)
+    assert doi is None
+
+
+@patch("bib_ami.bib_ami.requests.get")
+def test_refresh_metadata_success(mock_get):
     """Test refreshing metadata for an entry with a valid DOI."""
     mock_get.return_value.status_code = 200
     mock_get.return_value.json.return_value = {
@@ -119,3 +172,46 @@ def test_refresh_metadata(mock_get):
     assert updated_entry["journal"] == "Updated Journal"
     assert updated_entry["year"] == "2021"
     assert updated_entry["doi"] == "10.1000/xyz123"
+
+
+@patch("bib_ami.bib_ami.requests.get")
+def test_refresh_metadata_missing_container_title(mock_get):
+    """Test refreshing metadata when container-title is missing."""
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.json.return_value = {
+        "message": {
+            "title": ["Updated Title"],
+            "author": [{"given": "John", "family": "Smith"}],
+            "published": {"date-parts": [[2021]]},
+        }
+    }
+    entry = {
+        "ID": "test1",
+        "title": "Old Title",
+        "author": "Old Author",
+        "journal": "Old Journal",
+        "year": "2020",
+        "ENTRYTYPE": "article",
+    }
+    updated_entry = refresh_metadata(entry, "10.1000/xyz123")
+    assert updated_entry["title"] == "Updated Title"
+    assert updated_entry["author"] == "John Smith"
+    assert updated_entry["journal"] == "Old Journal"  # Fallback to an existing journal
+    assert updated_entry["year"] == "2021"
+    assert updated_entry["doi"] == "10.1000/xyz123"
+
+
+@patch("bib_ami.bib_ami.requests.get")
+def test_refresh_metadata_timeout(mock_get):
+    """Test refreshing metadata with timeout and retries."""
+    mock_get.side_effect = requests.exceptions.Timeout
+    entry = {
+        "ID": "test1",
+        "title": "Old Title",
+        "author": "Old Author",
+        "journal": "Old Journal",
+        "year": "2020",
+        "ENTRYTYPE": "article",
+    }
+    updated_entry = refresh_metadata(entry, "10.1000/xyz123")
+    assert updated_entry == entry  # Returns original entry on failure
