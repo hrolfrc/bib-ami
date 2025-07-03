@@ -51,4 +51,4 @@ jobs:
           path: coverage.xml
       - codecov/upload:
           file: coverage.xml
-          token: $CODECOV_TOKEN
+          token: CODECOV_TOKEN
