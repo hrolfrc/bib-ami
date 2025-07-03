@@ -10,7 +10,7 @@ workflows:
 
 orbs:
   python: circleci/python@2.1.1
-  codecov: codecov/codecov@5  # Updated to version 5
+  codecov: codecov/codecov@5  # Using latest orb version
 
 jobs:
   build_test:
@@ -50,5 +50,4 @@ jobs:
       - store_artifacts:
           path: coverage.xml
       - codecov/upload:
-          file: coverage.xml
           token: CODECOV_TOKEN
