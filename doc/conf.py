@@ -3,7 +3,7 @@
 project = 'bib-ami'
 copyright = '2025, Rolf Carlson'
 author = 'Rolf Carlson'
-release = '0.4.0'
+release = '0.4.1'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

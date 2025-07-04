@@ -6,7 +6,7 @@ import bibtexparser
 from bibtexparser.bibdatabase import BibDatabase
 from bibtexparser.bwriter import BibTexWriter
 
-from cross_ref_client import CrossRefClient
+from .cross_ref_client import CrossRefClient
 
 
 # Assuming the CrossRefClient class is in a file named crossref_client.py
