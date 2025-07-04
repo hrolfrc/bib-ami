@@ -1,13 +1,13 @@
 Citation
 ========
 
-To cite `bib-ami` in academic publications, please use the following information for the current release (version 0.2.13). This tool supports researchers in computational biology, machine learning, and other fields by automating BibTeX file management for LaTeX, Zotero, and JabRef workflows.
+To cite `bib-ami` in academic publications, please use the following information for the current release (version 0.3.0). This tool supports researchers in computational biology, machine learning, and other fields by automating BibTeX file management for LaTeX, Zotero, and JabRef workflows.
 
 Citation Details
 ----------------
 
 - **DOI**: `10.5281/zenodo.15795718 <https://doi.org/10.5281/zenodo.15795717>`_
-- **Version**: 0.2.13
+- **Version**: 0.3.0
 - **Authors**: Rolf Carlson
 - **Title**: bib-ami: A Python Tool for BibTeX File Management
 - **Publisher**: Zenodo
@@ -22,7 +22,7 @@ BibTeX Entry
    @software{hrolfrc_2025_bib_ami,
      author = {Rolf Carlson},
      title = {bib-ami: A Python Tool for BibTeX File Management},
-     version = {0.2.13},
+     version = {0.3.0},
      publisher = {Zenodo},
      year = {2025},
      doi = {10.5281/zenodo.15795718},

@@ -17,6 +17,7 @@ doc/datasets/generated/
 # Distribution / packaging
 
 .Python
+archive/
 env/
 build/
 develop-eggs/

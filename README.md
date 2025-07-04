@@ -5,8 +5,7 @@
 [![Codecov](https://codecov.io/gh/hrolfrc/bib-ami/branch/master/graph/badge.svg)](https://codecov.io/gh/hrolfrc/bib-ami)
 [![DOI](https://zenodo.org/badge/1012755631.svg)](https://doi.org/10.5281/zenodo.15795717)
 
-
-A Python tool to merge, deduplicate, and clean BibTeX files. It consolidates `.bib` files from a directory, removes duplicate entries, validates DOIs, scrapes missing DOIs using CrossRef/DataCite APIs, and refreshes metadata for accurate citations, especially for AI-generated references.
+A Python tool to merge, deduplicate, and clean BibTeX files. It consolidates `.bib` files, removes duplicates, validates DOIs, scrapes missing DOIs using CrossRef/DataCite APIs, and refreshes metadata. Version 0.3.0 includes user-configurable email for CrossRef API Polite Pool access, correctness grouping with commented feedback, and a filter for validated entries, enhancing citation integrity for LaTeX, Zotero, and JabRef workflows.
 
 ## Installation
 
