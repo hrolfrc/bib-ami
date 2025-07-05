@@ -1,7 +1,7 @@
 .. _bib-ami-testing-strategy:
 
 For Developers: The Testing Strategy
-===================================
+====================================
 
 Goal
 ----
@@ -9,7 +9,7 @@ Goal
 The primary goal of this test plan is to verify that the bibliography processing tool achieves its desired outcome: producing a **trustworthy, complete, auditable, and high-fidelity "golden" bibliography**. This plan ensures that every component and workflow is rigorously tested to meet the project’s core principles of data integrity.
 
 Testing Philosophy: A Layered Approach
--------------------------------------
+--------------------------------------
 
 To ensure comprehensive coverage, we use a layered testing strategy. Each layer serves a distinct purpose, providing a safety net that catches different types of errors.
 
@@ -20,12 +20,12 @@ To ensure comprehensive coverage, we use a layered testing strategy. Each layer 
 This layered approach allows for rapid feedback during development (from unit tests) while guaranteeing the robustness of the complete system (from integration and E2E tests).
 
 Test Environment and Helper Classes
-----------------------------------
+-----------------------------------
 
 A robust testing environment is crucial for efficiency and clarity. All test code resides in a dedicated ``tests/`` directory, separate from the application source code in ``src/``. This environment is supported by a set of specialized helper classes designed to create test data and simulate external dependencies.
 
 Helper Class Descriptions
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 These classes are the foundation of our test suite, allowing us to create clean, readable, and powerful tests.
 
@@ -76,7 +76,7 @@ Unit Tests
 +--------------------+-----------------------------------------------------------------------------------------------------------------+
 
 Integration Tests
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 :Goal: Verify that the "plumbing" between the workflow phases is solid and that each phase can correctly process the file output from the previous one.
 :How it meets the desired outcome: Guarantees the **auditability** and reproducibility of the workflow by confirming the integrity of the intermediate artifacts.
@@ -85,8 +85,8 @@ Integration Tests
 | **Test Case**                    | **Actions**                                                                                                     |
 +==================================+=================================================================================================================+
 |                                  | is created. Then, feed this file to the ``Validator`` (using a mock API) and assert that its output file        |
-| ``Ingestor -> Validator``        | Use ``BibTexTestDirectory`` to create a test directory and run the ``Ingestor``. Assert that its output        |
-|                                  |  contains the correct validation statuses.                                                                      |
+| ``Ingestor -> Validator``        | Use ``BibTexTestDirectory`` to create a test directory and run the ``Ingestor``. Assert that its output         |
+|                                  | contains the correct validation statuses.                                                                       |
 +----------------------------------+-----------------------------------------------------------------------------------------------------------------+
 | ``Validator -> Reconciler``      | Create a pre-made validated JSON file containing known duplicates. Run the ``Reconciler`` on this file and      |
 |                                  | assert that its output has the correct number of deduplicated entries and that user notes have been merged      |
@@ -105,11 +105,11 @@ End-to-End (E2E) Tests
 +----------------------+-----------------------------------------------------------------------------------------------------------------+
 | **Test Scenario**    | **Actions**                                                                                                     |
 +======================+=================================================================================================================+
-| "Happy Path" Scenario| Use ``BibTexTestDirectory`` to create a directory with several well-formed ``.bib`` files. Run the full        |
+| "Happy Path" Scenario| Use ``BibTexTestDirectory`` to create a directory with several well-formed ``.bib`` files. Run the full         |
 |                      | application pipeline and assert that the final output files are created correctly and the summary report is     |
 |                      | accurate.                                                                                                       |
 +----------------------+-----------------------------------------------------------------------------------------------------------------+
-| Pathological Scenario| Use ``BibTexTestDirectory`` to create a directory with a mix of broken, duplicate, and un-verifiable entries.  |
+| Pathological Scenario| Use ``BibTexTestDirectory`` to create a directory with a mix of broken, duplicate, and un-verifiable entries.   |
 |                      | Run the full pipeline and assert that the final output files correctly separate the valid and suspect entries,  |
 |                      | and that the summary report reflects the actions taken.                                                         |
 +----------------------+-----------------------------------------------------------------------------------------------------------------+

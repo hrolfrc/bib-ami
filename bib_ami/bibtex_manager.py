@@ -12,6 +12,9 @@ import argparse
 import logging
 from typing import Optional
 
+import bibtexparser
+from bibtexparser.bwriter import BibTexWriter
+
 from .cross_ref_client import CrossRefClient
 from .ingestor import Ingestor
 from .reconciler import Reconciler
@@ -25,7 +28,6 @@ class BibTexManager:
 
     def __init__(self, settings: argparse.Namespace, client: Optional[CrossRefClient] = None):
         self.settings = settings
-        # Use the injected client if provided, otherwise create a real one.
         self.client = client if client else CrossRefClient(email=self.settings.email)
         self.ingestor = Ingestor()
         self.validator = Validator(client=self.client)
@@ -35,6 +37,14 @@ class BibTexManager:
 
     def process_bibliography(self):
         database, num_files = self.ingestor.ingest_from_directory(self.settings.input_dir)
+
+        if self.settings.merge_only:
+            logging.info("Merge-only mode enabled. Writing merged file and exiting.")
+            simple_writer = BibTexWriter()
+            with open(self.settings.output_file, 'w', encoding='utf-8') as f:
+                bibtexparser.dump(database, f, simple_writer)
+            return
+
         database, validated_count = self.validator.validate_all(database)
         database, duplicates_removed = self.reconciler.deduplicate(database)
         verified_db, suspect_db = self.triage.run_triage(database, self.settings.filter_validated)

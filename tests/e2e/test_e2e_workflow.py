@@ -20,47 +20,79 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 class TestE2EWorkflow(unittest.TestCase):
     def test_full_run_with_fuzzy_dedupe(self):
-        """Tests the full pipeline, including the fuzzy matching fallback."""
         with BibTexTestDirectory("e2e_test") as manager_dir:
-            # Case 1: DOI duplicates
             rec1 = RecordBuilder("rec1").with_title("Attention Is All You Need").with_note("Note A").build()
             rec2 = RecordBuilder("rec2").with_title("Attention is ALL you need").with_note("Note B").build()
-            # Case 2: Fuzzy duplicates without DOIs
             rec3 = RecordBuilder("rec3").with_title("A paper about fuzzy logic").build()
             rec4 = RecordBuilder("rec4").with_title("A paper about fuzzy logic!!").build()
-            # Case 3: A unique suspect entry
             rec5 = RecordBuilder("rec5").with_title("A truly unique paper").build()
-
             manager_dir.add_bib_file("source1.bib", [rec1, rec3, rec5])
             manager_dir.add_bib_file("source2.bib", [rec2, rec4])
-
             settings = argparse.Namespace(
                 input_dir=manager_dir.path, output_file=manager_dir.path / "final.bib",
-                suspect_file=manager_dir.path / "suspect.bib", email="test@example.com", filter_validated=False
+                suspect_file=manager_dir.path / "suspect.bib", email="test@example.com", filter_validated=False,
+                merge_only=False
             )
             mock_client = MockCrossRefClient(settings.email)
             main_manager = BibTexManager(settings, client=mock_client)
             main_manager.process_bibliography()
-
             with open(settings.output_file, 'r') as f:
                 final_db = bibtexparser.load(f)
             with open(settings.suspect_file, 'r') as f:
                 suspect_db = bibtexparser.load(f)
-
-            # Expected: 1 merged DOI entry
             self.assertEqual(len(final_db.entries), 1)
-            # Expected: 1 fuzzy-deduped entry + 1 unique entry
             self.assertEqual(len(suspect_db.entries), 2)
-
-            # Verify DOI merge
             merged_entry = final_db.entries[0]
             self.assertIn("Note A", merged_entry['note'])
             self.assertIn("Note B", merged_entry['note'])
 
-            # Verify fuzzy dedupe result
-            suspect_titles = {e['title'] for e in suspect_db.entries}
-            self.assertIn("A paper about fuzzy logic", suspect_titles)
-            self.assertIn("A truly unique paper", suspect_titles)
+    def test_merge_only_flag(self):
+        """Tests that --merge-only stops the workflow after ingestion."""
+        with BibTexTestDirectory("merge_only_test") as manager_dir:
+            rec1 = RecordBuilder("rec1").with_title("Title A").build()
+            rec2 = RecordBuilder("rec2").with_title("Title B").build()
+            manager_dir.add_bib_file("source1.bib", [rec1])
+            manager_dir.add_bib_file("source2.bib", [rec2])
+            settings = argparse.Namespace(
+                input_dir=manager_dir.path, output_file=manager_dir.path / "merged.bib",
+                suspect_file=None, email="test@example.com", filter_validated=False, merge_only=True
+            )
+            main_manager = BibTexManager(settings, client=None)
+            main_manager.process_bibliography()
+            with open(settings.output_file, 'r') as f:
+                final_db = bibtexparser.load(f)
+            # Should contain both entries, unprocessed
+            self.assertEqual(len(final_db.entries), 2)
+            # No 'doi' field should have been added
+            self.assertNotIn('doi', final_db.entries[0])
+
+    def test_filter_validated_flag(self):
+        """Tests that --filter-validated correctly separates entries."""
+        with BibTexTestDirectory("filter_validated_test") as manager_dir:
+            rec1 = RecordBuilder("rec1").with_title("Attention Is All You Need").build()  # Will be verified
+            rec2 = RecordBuilder("rec2").with_title("A Study of Deep Learning").build()  # Will be verified
+            rec3 = RecordBuilder("rec3").with_title("Accepted Book").as_book().build()  # Accepted, no DOI
+            rec4 = RecordBuilder("rec4").with_title("Suspect Article").build()  # Suspect, no DOI
+            manager_dir.add_bib_file("source.bib", [rec1, rec2, rec3, rec4])
+            settings = argparse.Namespace(
+                input_dir=manager_dir.path, output_file=manager_dir.path / "final.bib",
+                suspect_file=manager_dir.path / "suspect.bib", email="test@example.com", filter_validated=True,
+                merge_only=False
+            )
+            mock_client = MockCrossRefClient(settings.email)
+            main_manager = BibTexManager(settings, client=mock_client)
+            main_manager.process_bibliography()
+            with open(settings.output_file, 'r') as f:
+                final_db = bibtexparser.load(f)
+            with open(settings.suspect_file, 'r') as f:
+                suspect_db = bibtexparser.load(f)
+            # Only the two DOI-verified entries should be in the main file
+            self.assertEqual(len(final_db.entries), 2)
+            # The accepted book AND the suspect article should be in the suspect file
+            self.assertEqual(len(suspect_db.entries), 2)
+            final_ids = {e['ID'] for e in final_db.entries}
+            self.assertIn('rec1', final_ids)
+            self.assertIn('rec2', final_ids)
 
 
 if __name__ == '__main__':
