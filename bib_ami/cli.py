@@ -1,7 +1,8 @@
-# ==============================================================================
-# File: bib_ami/cli.py
-# New file to handle all command-line and configuration file parsing.
-# ==============================================================================
+"""
+This module contains the CLIParser class, responsible for handling all
+command-line argument parsing and configuration file loading for the bib-ami tool.
+"""
+
 import argparse
 import json
 import logging
@@ -10,11 +11,20 @@ from typing import Dict, Any
 
 
 class CLIParser:
-    """Parses command-line arguments and configuration for bib-ami."""
+    """
+    Parses command-line arguments and configuration for bib-ami.
+
+    This class uses argparse to define the application's command-line interface
+    and includes logic to load default settings from a JSON configuration file.
+    It ensures that all required settings are present and valid before returning
+    a unified configuration object to the main application manager.
+    """
 
     def __init__(self):
+        """Initializes the ArgumentParser with a description and default formatter."""
         self.parser = argparse.ArgumentParser(
             description="Clean, merge, and enrich BibTeX files.",
+            # This formatter automatically adds default values to help text.
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         )
         self._add_arguments()
@@ -63,18 +73,25 @@ class CLIParser:
     def get_settings(self) -> argparse.Namespace:
         """
         Parses args, loads config, and returns a unified settings object.
-        Command-line arguments take precedence over config file settings.
+
+        This method orchestrates the configuration loading process. It first
+        parses the command-line arguments, then loads settings from a JSON
+        config file, and finally merges them, with command-line arguments
+        taking precedence. It also performs final validation checks.
+
+        Returns:
+            An argparse.Namespace object containing all settings for the run.
         """
         args = self.parser.parse_args()
         config = self._load_config(args.config_file)
 
-        # Combine args and config, with args taking precedence
+        # Combine args and config, with command-line args taking precedence.
         settings = vars(args)
         for key, value in config.items():
             if settings.get(key) is None:
                 settings[key] = value
 
-        # Final validation
+        # Final validation to ensure the application can run correctly.
         if not settings.get("email"):
             self.parser.error(
                 "An email address is required. Provide it via --email or in the config file."
@@ -91,7 +108,16 @@ class CLIParser:
 
     @staticmethod
     def _load_config(config_path: Path) -> Dict[str, Any]:
-        """Loads settings from a JSON config file if it exists."""
+        """
+        Loads settings from a JSON config file if it exists.
+
+        Args:
+            config_path: The path to the JSON configuration file.
+
+        Returns:
+            A dictionary of settings from the file, or an empty dictionary
+            if the file does not exist or cannot be parsed.
+        """
         if config_path and config_path.exists():
             logging.info(f"Loading configuration from '{config_path}'")
             try:
