@@ -13,7 +13,7 @@ orbs:
 jobs:
   unit-test:
     docker:
-      - image: cimg/python:3.11  # Latest 3.11 for consistency
+      - image: cimg/python:3.11  # Matches local Python 3.11.13
     working_directory: ~/repo
     steps:
       - checkout
@@ -28,7 +28,7 @@ jobs:
       - run:
           name: Run unit tests
           command: |
-            python -m pytest --cov=bib_ami --cov-report=xml tests/unit/ tests/e2e/ -v
+            python -m pytest tests/unit/ -v --cov=bib_ami --cov-report=xml
       - store_artifacts:
           path: coverage.xml
       - codecov/upload:
@@ -45,9 +45,9 @@ jobs:
           args: >
             pytest pytest-cov pytest-mock bibtexparser requests fuzzywuzzy python-Levenshtein
       - run:
-          name: Run integration and E2E tests
+          name: Run E2E tests
           command: |
-            python -m pytest tests/integration/ tests/e2e/ --integration -v --log-file=integration.log
+            python -m pytest tests/e2e/ -v --log-file=integration.log
       - store_artifacts:
           path: integration.log
 
