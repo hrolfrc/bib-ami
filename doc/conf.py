@@ -4,7 +4,7 @@ project = 'bib-ami'
 # noinspection PyShadowingBuiltins
 copyright = '2025, Rolf Carlson'
 author = 'Rolf Carlson'
-release = '0.10.6'
+release = '0.10.7'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
