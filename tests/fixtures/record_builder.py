@@ -13,22 +13,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # ==============================================================================
 
 class RecordBuilder:
-    """
-    A factory for creating structured test data (BibTeX records as dicts).
-
-    This uses a fluent (builder) pattern to make test setup clean and readable.
-    Example:
-        record = RecordBuilder("my_id").with_title("My Title").with_doi("10.1/1").build()
-    """
-
     def __init__(self, entry_id: Optional[str] = None):
-        if entry_id is None:
-            entry_id = f"rec_{uuid.uuid4().hex[:8]}"
-
-        self._record: Dict[str, Any] = {
-            "ENTRYTYPE": "article",
-            "ID": entry_id,
-        }
+        self._record: Dict[str, Any] = {"ENTRYTYPE": "article", "ID": entry_id or f"rec_{uuid.uuid4().hex[:8]}"}
 
     def with_title(self, title: str) -> Self:
         self._record["title"] = title
@@ -36,14 +22,6 @@ class RecordBuilder:
 
     def with_author(self, author: str) -> Self:
         self._record["author"] = author
-        return self
-
-    def with_year(self, year: int) -> Self:
-        self._record["year"] = str(year)
-        return self
-
-    def with_doi(self, doi: str) -> Self:
-        self._record["doi"] = doi
         return self
 
     def with_note(self, note: str) -> Self:
@@ -55,5 +33,4 @@ class RecordBuilder:
         return self
 
     def build(self) -> Dict[str, Any]:
-        """Returns the final dictionary representing the BibTeX entry."""
         return self._record

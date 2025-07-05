@@ -8,13 +8,11 @@ import unittest
 from bibtexparser.bibdatabase import BibDatabase
 
 from tests.fixtures.record_builder import RecordBuilder
+from bib_ami.triage import Triage
 
 
-# noinspection PyArgumentList
 class TestTriage(unittest.TestCase):
     def setUp(self):
-        # In a real project, this would import the class
-        from bib_ami.triage import Triage
         self.triage = Triage()
 
     def test_triage_logic(self):
@@ -29,7 +27,8 @@ class TestTriage(unittest.TestCase):
         db.entries[1]['verified_doi'] = None  # A book without a DOI is accepted
         db.entries[2]['verified_doi'] = None  # An article without a DOI is suspect
 
-        verified_db, suspect_db = self.triage.run_triage(db)
+        # CORRECTED: Pass the required 'filter_validated' argument.
+        verified_db, suspect_db = self.triage.run_triage(db, filter_validated=False)
 
         self.assertEqual(len(verified_db.entries), 2)
         self.assertEqual(len(suspect_db.entries), 1)

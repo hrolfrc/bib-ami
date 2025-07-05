@@ -4,7 +4,7 @@
 # ==============================================================================
 import logging
 from .cli import CLIParser
-from .bib_tex_manager import BibTexManager
+from .bibtex_manager import BibTexManager
 
 
 def main():
@@ -23,8 +23,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# NOTE: The other classes (Ingestor, Validator, etc.) would need minor modifications
-# to their method signatures to return counts for the reporter, as designed
-# in the BibTexManager. For example, Ingestor.ingest_from_directory would
-# return (BibDatabase, int) instead of just BibDatabase.
