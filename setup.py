@@ -7,10 +7,9 @@ try:
 except FileNotFoundError:
     long_description = "A tool to merge and clean BibTeX files."
 
-# noinspection PyUnboundLocalVariable
 setup(
     name="bib_ami",
-    version="0.10.0",  # Updated version for new features
+    version="0.10.2",
     packages=find_packages(),
     install_requires=[
         "bibtexparser>=1.4.1",
@@ -20,7 +19,9 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "bib-ami = bib_ami.bib_ami:main",
+            # CORRECTED: Point to the main function in the __main__.py module
+            # to make the package runnable as a command-line tool.
+            "bib-ami = bib_ami.__main__:main",
         ],
     },
     author="Rolf Carlson",
