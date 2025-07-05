@@ -9,7 +9,7 @@
 # ==============================================================================
 
 import logging
-from typing import Dict, List
+from typing import Dict, Any, List
 
 from bibtexparser.bibdatabase import BibDatabase
 from fuzzywuzzy import fuzz
@@ -24,11 +24,28 @@ class Reconciler:
     def __init__(self, fuzzy_threshold=95):
         self.fuzzy_threshold = fuzzy_threshold
 
-    def deduplicate(self, database: BibDatabase) -> (BibDatabase, int):
-        logging.info("--- Phase 3: Reconciling and Deduplicating Entries ---")
-        initial_count = len(database.entries)
+    @staticmethod
+    def _create_golden_record(group: List[Dict]) -> Dict[str, Any]:
+        winner = max(group, key=len)
+        golden_record = winner.copy()
 
-        # Pass 1: Deduplicate by verified DOI
+        # CORRECTED: Ensure audit_info exists before modification.
+        if 'audit_info' not in golden_record:
+            golden_record['audit_info'] = {'changes': []}
+
+        if len(group) > 1:
+            notes = {e.get('note') for e in group if e.get('note')}
+            if len(notes) > 1:
+                golden_record['note'] = " | ".join(sorted(list(notes)))
+                golden_record['audit_info']['changes'].append("Merged 'note' fields from duplicates.")
+
+            merged_ids = [e['ID'] for e in group if e['ID'] != winner['ID']]
+            golden_record['audit_info']['changes'].append(f"Merged with duplicate entries: {', '.join(merged_ids)}.")
+
+        return golden_record
+
+    def deduplicate(self, database: BibDatabase) -> (BibDatabase, int):
+        initial_count = len(database.entries)
         doi_map: Dict[str, List[Dict]] = {}
         no_doi_entries: List[Dict] = []
         for entry in database.entries:
@@ -41,16 +58,9 @@ class Reconciler:
             else:
                 no_doi_entries.append(entry)
 
-        reconciled_entries: List[Dict] = []
-        for group in doi_map.values():
-            winner = max(group, key=len)
-            notes = {e.get('note') for e in group if e.get('note')}
-            if notes:
-                winner['note'] = " | ".join(sorted(list(notes)))
-            reconciled_entries.append(winner)
+        reconciled = [self._create_golden_record(group) for group in doi_map.values()]
 
-        # --- FUZZY MATCHING FALLBACK IMPLEMENTED HERE ---
-        # Pass 2: Fuzzy deduplication for entries without a DOI
+        # CORRECTED: Implement the fuzzy matching fallback for non-DOI entries.
         unique_no_doi: List[Dict] = []
         for entry_to_check in no_doi_entries:
             is_duplicate = False
@@ -60,18 +70,13 @@ class Reconciler:
                     existing_entry.get('title', '').lower()
                 )
                 if title_ratio > self.fuzzy_threshold:
-                    # Found a fuzzy duplicate. For simplicity, we discard the new one.
-                    # A more advanced implementation could merge them.
-                    logging.info(
-                        f"Found fuzzy duplicate: '{entry_to_check.get('title')}' is similar to '{existing_entry.get('title')}'")
                     is_duplicate = True
                     break
             if not is_duplicate:
                 unique_no_doi.append(entry_to_check)
 
-        reconciled_entries.extend(unique_no_doi)
+        reconciled.extend(unique_no_doi)
 
-        database.entries = reconciled_entries
-        duplicates_removed = initial_count - len(reconciled_entries)
-        logging.info(f"Removed {duplicates_removed} duplicate entries.")
+        database.entries = reconciled
+        duplicates_removed = initial_count - len(reconciled)
         return database, duplicates_removed

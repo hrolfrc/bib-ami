@@ -17,7 +17,18 @@ class Validator:
     def validate_all(self, database: BibDatabase) -> (BibDatabase, int):
         validated_count = 0
         for entry in database.entries:
-            entry['verified_doi'] = self.client.get_doi_for_entry(entry)
-            if entry['verified_doi']:
+            entry['audit_info'] = {"changes": []}  # Initialize audit trail
+            verified_doi = self.client.get_doi_for_entry(entry)
+
+            if verified_doi:
+                original_doi = entry.get('doi', '').lower()
+                if not original_doi:
+                    entry['audit_info']['changes'].append(f"Added new DOI [{verified_doi}].")
+                elif original_doi != verified_doi.lower():
+                    entry['audit_info']['changes'].append(f"Corrected DOI from [{original_doi}] to [{verified_doi}].")
+
+                entry['verified_doi'] = verified_doi
                 validated_count += 1
+            else:
+                entry['verified_doi'] = None
         return database, validated_count
