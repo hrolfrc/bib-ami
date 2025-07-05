@@ -10,7 +10,7 @@ except FileNotFoundError:
 # noinspection PyUnboundLocalVariable
 setup(
     name="bib_ami",
-    version="0.4.2",  # Updated version for new features
+    version="0.5.0",  # Updated version for new features
     packages=find_packages(),
     install_requires=[
         "bibtexparser>=1.4.1",
