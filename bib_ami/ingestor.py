@@ -20,6 +20,8 @@ class Ingestor:
             try:
                 with open(file_path, 'r', encoding='utf-8') as bibtex_file:
                     db = bibtexparser.load(bibtex_file)
+                    for entry in db.entries:
+                        entry['source_file'] = str(file_path.name)
                     database.entries.extend(db.entries)
             except Exception as e:
                 logging.error(f"Failed to parse '{file_path}': {e}")

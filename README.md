@@ -5,7 +5,7 @@
 [![Codecov](https://codecov.io/gh/hrolfrc/bib-ami/branch/master/graph/badge.svg)](https://codecov.io/gh/hrolfrc/bib-ami)
 [![DOI](https://zenodo.org/badge/1012755631.svg)](https://doi.org/10.5281/zenodo.15795717)
 
-## bib-ami: The Bibliography Integrity Manager
+## A Bibliography Integrity Manager
 
 **bib-ami** is a command-line tool for improving the integrity of BibTeX bibliographies. It automates a critical data cleaning and entity resolution workflow by consolidating multiple `.bib` files, validating every entry against the CrossRef API to establish a canonical DOI, and then deduplicating records based on this verified identifier.
 

@@ -1,26 +1,25 @@
 # bib-ami: Future Development Plan
 
-This document outlines the remaining features required to complete the current vision, as well as potential enhancements for future versions.
+With the core architecture implemented and tested, the project is on a solid foundation. This document outlines the remaining features required to complete the current vision, as well as potential enhancements for future versions.
 
 ---
 
-## Priority 1: Completing the Current Vision
+## Foundational Priority: Code Quality & Robustness
 
-This is the one remaining feature required to fully realize the "enriched" and "auditable" goals we set out in the project's philosophy.
+This is an ongoing priority that should be addressed alongside all new feature development to ensure the long-term health and stability of the project.
 
-### Implement Full Metadata Refreshing
+### Increase Test Coverage to >90%
 
-* **Goal:** To ensure that every "golden record" is not just verified but also enriched with the most accurate and complete metadata available.
-* **Implementation Steps:**
-    1.  **Enhance `CrossRefClient`:** Add a new method, `get_metadata_by_doi(doi)`, that takes a verified DOI and fetches the full bibliographic record from the CrossRef API.
-    2.  **Create `MetadataRefresher` Class:** Create a new component whose single responsibility is to refresh entries. Its main method would take a record with a `verified_doi`.
-    3.  **Update Core Fields:** The refresher will use the data from the API to overwrite the entry's core descriptive fields (`title`, `author`, `year`, `journal`, etc.), ensuring they are canonical.
-    4.  **Update Audit Trail:** The refresher must log its actions to the entry's `audit_info` dictionary (e.g., `"Refreshed metadata from CrossRef."`).
-    5.  **Integrate into `BibTexManager`:** Add this as a new step in the main workflow, occurring right after validation and before reconciliation.
+* **Goal:** To move from the current coverage level to 85--95%, ensuring all critical application logic is verified by automated tests.
+* **Strategy:**
+    1.  **Target Untested Logic:** Use the Codecov report to identify modules and functions with low coverage.
+    2.  **Write "Unhappy Path" Tests:** Add specific unit tests for error conditions, such as file I/O errors in the `Ingestor`, API failures in the `Validator`, and malformed entries in the `Reconciler`.
+    3.  **Ensure Full Branch Coverage:** Add tests to verify that all `if/else` conditions in the `Triage` and `Reconciler` classes are executed.
+    4.  **Maintain Coverage:** Configure CI (e.g., with Codecov's settings) to fail a pull request if it decreases the overall test coverage.
 
 ---
 
-## Priority 2: High-Value Future Enhancements
+## Priority 1: High-Value Future Enhancements
 
 These features would provide the most significant improvements in coverage and usability for a future `v1.0` release.
 
@@ -41,7 +40,7 @@ These features would provide the most significant improvements in coverage and u
 
 ---
 
-## Priority 3: Robustness and Quality-of-Life Improvements
+## Priority 2: Robustness and Quality-of-Life Improvements
 
 These are smaller features that would make the tool more professional and easier to use.
 

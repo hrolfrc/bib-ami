@@ -96,3 +96,6 @@ class CrossRefClient:
         except requests.exceptions.RequestException as e:
             logging.error(f"Request failed for title '{title}': {e}")
             return None
+    
+    def get_metadata_by_doi(self, doi: str) -> Optional[Dict[str, Any]]:
+        raise NotImplementedError

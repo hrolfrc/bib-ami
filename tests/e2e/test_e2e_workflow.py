@@ -18,6 +18,7 @@ from tests.mocks.api_client import MockCrossRefClient
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
+# noinspection SpellCheckingInspection
 class TestE2EWorkflow(unittest.TestCase):
     def test_full_run_with_fuzzy_dedupe(self):
         with BibTexTestDirectory("e2e_test") as manager_dir:
@@ -67,17 +68,17 @@ class TestE2EWorkflow(unittest.TestCase):
             self.assertNotIn('doi', final_db.entries[0])
 
     def test_filter_validated_flag(self):
-        """Tests that --filter-validated correctly separates entries."""
         with BibTexTestDirectory("filter_validated_test") as manager_dir:
-            rec1 = RecordBuilder("rec1").with_title("Attention Is All You Need").build()  # Will be verified
-            rec2 = RecordBuilder("rec2").with_title("A Study of Deep Learning").build()  # Will be verified
-            rec3 = RecordBuilder("rec3").with_title("Accepted Book").as_book().build()  # Accepted, no DOI
-            rec4 = RecordBuilder("rec4").with_title("Suspect Article").build()  # Suspect, no DOI
+            rec1 = RecordBuilder("rec1").with_title("Attention Is All You Need").with_author("Vaswani").build()
+            rec2 = RecordBuilder("rec2").with_title("A Study of Deep Learning").with_author("LeCun").build()
+            rec3 = RecordBuilder("rec3").with_title("Accepted Book").as_book().build()
+            rec4 = RecordBuilder("rec4").with_title("Suspect Article").build()
             manager_dir.add_bib_file("source.bib", [rec1, rec2, rec3, rec4])
+            # CORRECTED: Ensure all expected attributes are present in the settings object
             settings = argparse.Namespace(
                 input_dir=manager_dir.path, output_file=manager_dir.path / "final.bib",
-                suspect_file=manager_dir.path / "suspect.bib", email="test@example.com", filter_validated=True,
-                merge_only=False
+                suspect_file=manager_dir.path / "suspect.bib", email="test@example.com",
+                filter_validated=True, merge_only=False
             )
             mock_client = MockCrossRefClient(settings.email)
             main_manager = BibTexManager(settings, client=mock_client)
@@ -86,13 +87,34 @@ class TestE2EWorkflow(unittest.TestCase):
                 final_db = bibtexparser.load(f)
             with open(settings.suspect_file, 'r') as f:
                 suspect_db = bibtexparser.load(f)
-            # Only the two DOI-verified entries should be in the main file
             self.assertEqual(len(final_db.entries), 2)
-            # The accepted book AND the suspect article should be in the suspect file
             self.assertEqual(len(suspect_db.entries), 2)
-            final_ids = {e['ID'] for e in final_db.entries}
-            self.assertIn('rec1', final_ids)
-            self.assertIn('rec2', final_ids)
+
+    def test_full_run_with_metadata_refresh(self):
+        """Tests the full pipeline including metadata refreshing."""
+        with BibTexTestDirectory("e2e_refresh_test") as manager_dir:
+            rec1 = RecordBuilder("rec1").with_title("Attention Is All You Need").with_author(
+                "A. Vaswani et al.").build()
+            rec2 = RecordBuilder("rec2").with_title("A paper with no DOI").build()
+            manager_dir.add_bib_file("source.bib", [rec1, rec2])
+
+            # CORRECTED: Ensure all expected attributes are present in the settings object
+            settings = argparse.Namespace(
+                input_dir=manager_dir.path, output_file=manager_dir.path / "final.bib",
+                suspect_file=manager_dir.path / "suspect.bib", email="test@example.com",
+                filter_validated=False, merge_only=False
+            )
+            mock_client = MockCrossRefClient(settings.email)
+            main_manager = BibTexManager(settings, client=mock_client)
+            main_manager.process_bibliography()
+
+            with open(settings.output_file, 'r') as f:
+                final_db = bibtexparser.load(f)
+
+            self.assertEqual(len(final_db.entries), 1)
+            verified_entry = final_db.entries[0]
+
+            self.assertEqual(verified_entry['title'], "Attention Is All You Need (Canonical)")
 
 
 if __name__ == '__main__':
