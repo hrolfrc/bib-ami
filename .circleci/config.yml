@@ -20,7 +20,7 @@ jobs:
       - run:
           name: Verify critical files
           command: |
-            ls -l README.md setup.py bib_ami/__main__.py || exit 1
+            ls -l README.md pyproject.toml bib_ami/__main__.py || exit 1
       - python/install-packages:
           pkg-manager: pip
           args: >
