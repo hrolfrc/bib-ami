@@ -15,39 +15,49 @@ class CLIParser:
     def __init__(self):
         self.parser = argparse.ArgumentParser(
             description="Clean, merge, and enrich BibTeX files.",
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         )
         self._add_arguments()
 
     def _add_arguments(self):
         """Defines all command-line arguments for the application."""
         self.parser.add_argument(
-            "--input-dir", required=True, type=Path,
-            help="Directory containing input .bib files."
+            "--input-dir",
+            required=True,
+            type=Path,
+            help="Directory containing input .bib files.",
         )
         self.parser.add_argument(
-            "--output-file", required=True, type=Path,
-            help="Path for the main output file of verified/accepted entries."
+            "--output-file",
+            required=True,
+            type=Path,
+            help="Path for the main output file of verified/accepted entries.",
         )
         self.parser.add_argument(
-            "--suspect-file", type=Path,
-            help="Path for the output file of suspect entries. Required if using --filter-validated."
+            "--suspect-file",
+            type=Path,
+            help="Path for the output file of suspect entries. Required if using --filter-validated.",
         )
         self.parser.add_argument(
-            "--config-file", type=Path, default="bib_ami_config.json",
-            help="Path to a JSON configuration file."
+            "--config-file",
+            type=Path,
+            default="bib_ami_config.json",
+            help="Path to a JSON configuration file.",
         )
         self.parser.add_argument(
-            "--email", type=str,
-            help="Email for CrossRef API Polite Pool. Overrides config file."
+            "--email",
+            type=str,
+            help="Email for CrossRef API Polite Pool. Overrides config file.",
         )
         self.parser.add_argument(
-            "--merge-only", action="store_true",
-            help="If set, only merge files without further processing."
+            "--merge-only",
+            action="store_true",
+            help="If set, only merge files without further processing.",
         )
         self.parser.add_argument(
-            "--filter-validated", action="store_true",
-            help="If set, only save fully validated entries to the main output file."
+            "--filter-validated",
+            action="store_true",
+            help="If set, only save fully validated entries to the main output file.",
         )
 
     def get_settings(self) -> argparse.Namespace:
@@ -65,11 +75,17 @@ class CLIParser:
                 settings[key] = value
 
         # Final validation
-        if not settings.get('email'):
-            self.parser.error("An email address is required. Provide it via --email or in the config file.")
+        if not settings.get("email"):
+            self.parser.error(
+                "An email address is required. Provide it via --email or in the config file."
+            )
 
-        if settings.get('filter_validated') and not settings.get('suspect_file'):
-            self.parser.error("--suspect-file is required when using --filter-validated.")
+        if settings.get("filter_validated") and not settings.get(
+            "suspect_file"
+        ):
+            self.parser.error(
+                "--suspect-file is required when using --filter-validated."
+            )
 
         return argparse.Namespace(**settings)
 
@@ -79,8 +95,10 @@ class CLIParser:
         if config_path and config_path.exists():
             logging.info(f"Loading configuration from '{config_path}'")
             try:
-                with open(config_path, 'r') as f:
+                with open(config_path, "r") as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError) as e:
-                logging.warning(f"Could not read or parse config file '{config_path}': {e}")
+                logging.warning(
+                    f"Could not read or parse config file '{config_path}': {e}"
+                )
         return {}

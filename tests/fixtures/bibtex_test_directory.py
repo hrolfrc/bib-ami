@@ -8,13 +8,16 @@ from bibtexparser.bibdatabase import BibDatabase
 from bibtexparser.bwriter import BibTexWriter
 
 # Configure basic logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 # ==============================================================================
 # File: tests/fixtures/bibtex_test_directory.py
 # A context manager to handle temporary test directories.
 # ==============================================================================
+
 
 class BibTexTestDirectory:
     def __init__(self, base_dir: str = "temp_test_env"):
@@ -34,8 +37,10 @@ class BibTexTestDirectory:
         db = BibDatabase()
         db.entries = entries
         writer = BibTexWriter()
-        with open(self.path / filename, 'w', encoding='utf-8') as f:
+        with open(self.path / filename, "w", encoding="utf-8") as f:
             bibtexparser.dump(db, f, writer)
 
-    def add_non_bib_file(self, filename: str, content: str = "This is not a bib file."):
+    def add_non_bib_file(
+        self, filename: str, content: str = "This is not a bib file."
+    ):
         self.path.joinpath(filename).write_text(content)

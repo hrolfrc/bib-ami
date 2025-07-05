@@ -19,15 +19,19 @@ class TestTriage(unittest.TestCase):
         db = BibDatabase()
         db.entries = [
             RecordBuilder("rec1").with_title("Verified Article").build(),
-            RecordBuilder("rec2").with_title("Accepted Book").as_book().build(),
+            RecordBuilder("rec2")
+            .with_title("Accepted Book")
+            .as_book()
+            .build(),
             RecordBuilder("rec3").with_title("Suspect Article").build(),
         ]
-        # CORRECTED: Initialize audit_info for each entry to simulate the Validator's output.
         for entry in db.entries:
-            entry['audit_info'] = {'changes': []}
-        db.entries[0]['verified_doi'] = "10.1/verified"
-        db.entries[1]['verified_doi'] = None
-        db.entries[2]['verified_doi'] = None
-        verified_db, suspect_db = self.triage.run_triage(db, filter_validated=False)
+            entry["audit_info"] = {"changes": []}
+        db.entries[0]["verified_doi"] = "10.1/verified"
+        db.entries[1]["verified_doi"] = None
+        db.entries[2]["verified_doi"] = None
+        verified_db, suspect_db = self.triage.run_triage(
+            db, filter_validated=False
+        )
         self.assertEqual(len(verified_db.entries), 2)
         self.assertEqual(len(suspect_db.entries), 1)

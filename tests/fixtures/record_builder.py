@@ -4,7 +4,9 @@ import uuid
 from typing import Dict, Any, Optional, Self
 
 # Configure basic logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 # ==============================================================================
@@ -12,9 +14,13 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # A factory for creating BibTeX record dictionaries for tests.
 # ==============================================================================
 
+
 class RecordBuilder:
     def __init__(self, entry_id: Optional[str] = None):
-        self._record: Dict[str, Any] = {"ENTRYTYPE": "article", "ID": entry_id or f"rec_{uuid.uuid4().hex[:8]}"}
+        self._record: Dict[str, Any] = {
+            "ENTRYTYPE": "article",
+            "ID": entry_id or f"rec_{uuid.uuid4().hex[:8]}",
+        }
 
     def with_title(self, title: str) -> Self:
         self._record["title"] = title
