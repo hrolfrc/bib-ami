@@ -1,60 +1,95 @@
 version: 2.1
 
+# ------------------------------------------------------------------------------
+# WORKFLOWS: Defines the sequence of jobs to be run.
+# ------------------------------------------------------------------------------
 workflows:
   build-and-deploy:
     jobs:
+      # This workflow has only one job, which handles everything.
       - build_test:
           context:
-            - twine  # Provides TWINE_USERNAME and TWINE_PASSWORD
-            - codecov  # Provides CODECOV_TOKEN
+            # Use contexts to securely access secrets stored in CircleCI.
+            - twine    # Provides TWINE_USERNAME and TWINE_PASSWORD for PyPI.
+            - codecov  # Provides CODECOV_TOKEN for Codecov uploads.
+          filters:
+            branches:
+              # This ensures the deployment step only runs on the main branch.
+              # It's a critical safety measure to prevent accidental deployments
+              # from feature branches.
+              only:
+                - main
 
+# ------------------------------------------------------------------------------
+# ORBS: Reusable packages of CircleCI configuration.
+# ------------------------------------------------------------------------------
 orbs:
+  # Simplifies common Python operations like installing dependencies.
   python: circleci/python@2.1.1
+  # Simplifies uploading coverage reports to Codecov.
   codecov: codecov/codecov@5
 
+# ------------------------------------------------------------------------------
+# JOBS: Defines the individual tasks to be executed.
+# ------------------------------------------------------------------------------
 jobs:
   build_test:
+    # Define the execution environment.
     docker:
       - image: cimg/python:3.11.0
     working_directory: ~/repo
+
+    # The sequence of commands to run for this job.
     steps:
+      # Step 1: Get the source code from the repository.
       - checkout
+
+      # Step 2: A quick sanity check to ensure the core files exist.
       - run:
           name: Verify critical files
-          # CORRECTED: Check for the new package structure instead of the old file.
-          # This verifies that the main package directory and its entry point exist.
           command: |
             ls -l README.md setup.py bib_ami/__main__.py || exit 1
+
+      # Step 3: Install all project dependencies (both for running and developing).
       - python/install-packages:
           pkg-manager: pip
-          # Added pytest-mock for the new testing approach
-          args: pytest pytest-cov twine sphinx sphinx_rtd_theme bibtexparser requests fuzzywuzzy python-Levenshtein build pytest-mock
-      - run:
-          name: Verify Python version
-          command: python3 --version
+          args: >
+            pytest pytest-cov twine sphinx sphinx_rtd_theme
+            bibtexparser requests fuzzywuzzy python-Levenshtein
+            build pytest-mock
+
+      # Step 4: Run the full test suite and generate a coverage report.
       - run:
           name: Run tests
-          # Pytest will automatically discover tests in the /tests directory
           command: pytest --cov=bib_ami --cov-report=xml
+
+      # Step 5: Build the Sphinx documentation.
       - run:
           name: Build documentation
           command: |
             cd doc
             make html
             cd ..
+
+      # Step 6: Create the distributable package files (.whl and .tar.gz).
       - run:
           name: Build distribution packages
           command: python3 -m build
+
+      # Step 7: Upload the new version to the Python Package Index (PyPI).
       - run:
           name: Upload to PyPI
-          # This step should only run on a specific branch, e.g., main.
-          # Consider adding a filter to the job for this.
           command: python3 -m twine upload dist/* --verbose
+
+      # Step 8: Save the generated documentation as a build artifact.
       - store_artifacts:
           path: doc/_build/html/
           destination: doc
+
+      # Step 9: Save the coverage report as a build artifact.
       - store_artifacts:
           path: coverage.xml
+
+      # Step 10: Upload the coverage report to Codecov.io.
       - codecov/upload:
           token: CODECOV_TOKEN
-
