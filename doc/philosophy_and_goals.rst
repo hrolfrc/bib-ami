@@ -33,6 +33,8 @@ problems include:
    bibliographies, detracting from their primary work of research and
    writing.
 
+These problems create a classic data science challenge known as entity resolution: identifying and merging multiple records that refer to the same real-world entity—in this case, a single academic publication.
+
 The ``bib-ami`` Philosophy: Creating a "Golden" Bibliography
 ------------------------------------------------------------
 
