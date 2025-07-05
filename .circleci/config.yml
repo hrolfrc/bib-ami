@@ -1,95 +1,101 @@
 version: 2.1
 
 # ------------------------------------------------------------------------------
-# WORKFLOWS: Defines the sequence of jobs to be run.
-# ------------------------------------------------------------------------------
-workflows:
-  build-and-deploy:
-    jobs:
-      # This workflow has only one job, which handles everything.
-      - build_test:
-          context:
-            # Use contexts to securely access secrets stored in CircleCI.
-            - twine    # Provides TWINE_USERNAME and TWINE_PASSWORD for PyPI.
-            - codecov  # Provides CODECOV_TOKEN for Codecov uploads.
-          filters:
-            branches:
-              # This ensures the deployment step only runs on the main branch.
-              # It's a critical safety measure to prevent accidental deployments
-              # from feature branches.
-              only:
-                - main
-
-# ------------------------------------------------------------------------------
 # ORBS: Reusable packages of CircleCI configuration.
 # ------------------------------------------------------------------------------
 orbs:
-  # Simplifies common Python operations like installing dependencies.
   python: circleci/python@2.1.1
-  # Simplifies uploading coverage reports to Codecov.
   codecov: codecov/codecov@5
 
 # ------------------------------------------------------------------------------
 # JOBS: Defines the individual tasks to be executed.
 # ------------------------------------------------------------------------------
 jobs:
-  build_test:
-    # Define the execution environment.
+  unit-test:
     docker:
-      - image: cimg/python:3.11.0
+      - image: cimg/python:3.11  # Latest 3.11 for consistency
     working_directory: ~/repo
-
-    # The sequence of commands to run for this job.
     steps:
-      # Step 1: Get the source code from the repository.
       - checkout
-
-      # Step 2: A quick sanity check to ensure the core files exist.
       - run:
           name: Verify critical files
           command: |
             ls -l README.md setup.py bib_ami/__main__.py || exit 1
-
-      # Step 3: Install all project dependencies (both for running and developing).
       - python/install-packages:
           pkg-manager: pip
           args: >
-            pytest pytest-cov twine sphinx sphinx_rtd_theme
-            bibtexparser requests fuzzywuzzy python-Levenshtein
-            build pytest-mock
-
-      # Step 4: Run the full test suite and generate a coverage report.
+            pytest pytest-cov pytest-mock bibtexparser requests fuzzywuzzy python-Levenshtein
       - run:
-          name: Run tests
-          command: pytest --cov=bib_ami --cov-report=xml
+          name: Run unit tests
+          command: |
+            python -m pytest --cov=bib_ami --cov-report=xml tests/unit/ tests/e2e/ -v
+      - store_artifacts:
+          path: coverage.xml
+      - codecov/upload:
+          token: CODECOV_TOKEN
 
-      # Step 5: Build the Sphinx documentation.
+  integration-test:
+    docker:
+      - image: cimg/python:3.11
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip
+          args: >
+            pytest pytest-cov pytest-mock bibtexparser requests fuzzywuzzy python-Levenshtein
+      - run:
+          name: Run integration and E2E tests
+          command: |
+            python -m pytest tests/integration/ tests/e2e/ --integration -v --log-file=integration.log
+      - store_artifacts:
+          path: integration.log
+
+  deploy:
+    docker:
+      - image: cimg/python:3.11
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip
+          args: >
+            twine sphinx sphinx_rtd_theme build
       - run:
           name: Build documentation
           command: |
             cd doc
             make html
             cd ..
-
-      # Step 6: Create the distributable package files (.whl and .tar.gz).
       - run:
           name: Build distribution packages
-          command: python3 -m build
-
-      # Step 7: Upload the new version to the Python Package Index (PyPI).
+          command: |
+            python3 -m build
       - run:
           name: Upload to PyPI
-          command: python3 -m twine upload dist/* --verbose
-
-      # Step 8: Save the generated documentation as a build artifact.
+          command: |
+            python3 -m twine upload dist/* --verbose
       - store_artifacts:
           path: doc/_build/html/
           destination: doc
 
-      # Step 9: Save the coverage report as a build artifact.
-      - store_artifacts:
-          path: coverage.xml
-
-      # Step 10: Upload the coverage report to Codecov.io.
-      - codecov/upload:
-          token: CODECOV_TOKEN
+# ------------------------------------------------------------------------------
+# WORKFLOWS: Defines the sequence of jobs to be run.
+# ------------------------------------------------------------------------------
+workflows:
+  build-and-deploy:
+    jobs:
+      - unit-test
+      - integration-test:
+          requires:
+            - unit-test
+      - deploy:
+          context:
+            - twine
+            - codecov
+          requires:
+            - integration-test
+          filters:
+            branches:
+              only:
+                - master

@@ -9,7 +9,7 @@ except FileNotFoundError:
 
 setup(
     name="bib_ami",
-    version="0.10.4",
+    version="0.10.5",
     packages=find_packages(),
     install_requires=[
         "bibtexparser>=1.4.1",
