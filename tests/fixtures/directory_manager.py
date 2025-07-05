@@ -4,13 +4,16 @@ from pathlib import Path
 from typing import Dict, Any, Self
 
 # Configure basic logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 # ==============================================================================
 # File: tests/fixtures/directory_manager.py
 # A context manager to handle temporary test directories.
 # ==============================================================================
+
 
 class BibTexTestDirectory:
     """
@@ -57,12 +60,16 @@ class BibTexTestDirectory:
         writer = BibTexWriter()
 
         file_path = self.path / filename
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             bibtexparser.dump(db, f, writer)
-        logging.info(f"Created test file '{file_path}' with {len(entries)} entries.")
+        logging.info(
+            f"Created test file '{file_path}' with {len(entries)} entries."
+        )
 
-    def add_non_bib_file(self, filename: str, content: str = "This is not a bib file."):
+    def add_non_bib_file(
+        self, filename: str, content: str = "This is not a bib file."
+    ):
         """Adds a non-bibliographic file to the test directory."""
         file_path = self.path / filename
-        file_path.write_text(content, encoding='utf-8')
+        file_path.write_text(content, encoding="utf-8")
         logging.info(f"Created non-bib file '{file_path}'.")

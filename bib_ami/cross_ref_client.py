@@ -6,7 +6,9 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 # Configure basic logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 class CrossRefClient:
@@ -16,6 +18,7 @@ class CrossRefClient:
     This client uses a requests.Session for connection pooling and a robust
     retry strategy to handle transient network issues and API rate limits.
     """
+
     BASE_URL = "https://api.crossref.org/works"
 
     def __init__(self, email: str, timeout: int = 10, max_retries: int = 3):
@@ -28,7 +31,9 @@ class CrossRefClient:
             max_retries (int): The maximum number of retries for failed requests.
         """
         if not email:
-            raise ValueError("An email address is required for the CrossRef API's Polite Pool.")
+            raise ValueError(
+                "An email address is required for the CrossRef API's Polite Pool."
+            )
 
         self.email = email
         self.timeout = timeout
@@ -37,16 +42,18 @@ class CrossRefClient:
     def _create_session(self, max_retries: int) -> requests.Session:
         """Configures and returns a requests.Session with retry logic."""
         session = requests.Session()
-        session.headers.update({
-            "User-Agent": f"bib-ami/1.0 (mailto:{self.email})",
-            "Accept": "application/json"
-        })
+        session.headers.update(
+            {
+                "User-Agent": f"bib-ami/1.0 (mailto:{self.email})",
+                "Accept": "application/json",
+            }
+        )
 
         retry_strategy = Retry(
             total=max_retries,
             status_forcelist=[429, 500, 502, 503, 504],
             backoff_factor=1,
-            respect_retry_after_header=True
+            respect_retry_after_header=True,
         )
 
         adapter = HTTPAdapter(max_retries=retry_strategy)
@@ -67,7 +74,9 @@ class CrossRefClient:
         """
         title = entry.get("title")
         if not title:
-            logging.warning(f"Entry with ID '{entry.get('ID', 'unknown')}' is missing a title for lookup.")
+            logging.warning(
+                f"Entry with ID '{entry.get('ID', 'unknown')}' is missing a title for lookup."
+            )
             return None
 
         params = {"query.title": title, "rows": 1}
@@ -78,7 +87,9 @@ class CrossRefClient:
 
         logging.info(f"Querying CrossRef for title: '{title}'")
         try:
-            response = self.session.get(self.BASE_URL, params=params, timeout=self.timeout)
+            response = self.session.get(
+                self.BASE_URL, params=params, timeout=self.timeout
+            )
             response.raise_for_status()
 
             data = response.json()
@@ -96,6 +107,6 @@ class CrossRefClient:
         except requests.exceptions.RequestException as e:
             logging.error(f"Request failed for title '{title}': {e}")
             return None
-    
+
     def get_metadata_by_doi(self, doi: str) -> Optional[Dict[str, Any]]:
         raise NotImplementedError

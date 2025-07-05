@@ -14,9 +14,9 @@ class Writer:
 
     @staticmethod
     def _format_audit_comment(entry: Dict[str, Any]) -> str:
-        audit_info = entry.get('audit_info', {})
-        status = audit_info.get('status', 'Unknown')
-        changes = audit_info.get('changes', [])
+        audit_info = entry.get("audit_info", {})
+        status = audit_info.get("status", "Unknown")
+        changes = audit_info.get("changes", [])
         comment = f"% bib-ami STATUS: {status}\n"
         comment += f"% bib-ami CHANGES: {'; '.join(changes) if changes else 'No changes made.'}\n"
         return comment
@@ -24,16 +24,22 @@ class Writer:
     @staticmethod
     def _clean_entry(entry: Dict[str, Any]) -> Dict[str, Any]:
         cleaned = entry.copy()
-        if cleaned.get('verified_doi'):
-            cleaned['doi'] = cleaned['verified_doi']
-        for field in ['verified_doi', 'source_file', 'audit_info']:
+        if cleaned.get("verified_doi"):
+            cleaned["doi"] = cleaned["verified_doi"]
+        for field in ["verified_doi", "source_file", "audit_info"]:
             if field in cleaned:
                 del cleaned[field]
         return cleaned
 
-    def write_files(self, verified_db: BibDatabase, suspect_db: BibDatabase, output_file: Path, suspect_file: Path):
+    def write_files(
+        self,
+        verified_db: BibDatabase,
+        suspect_db: BibDatabase,
+        output_file: Path,
+        suspect_file: Path,
+    ):
         writer = BibTexWriter()
-        writer.indent = '  '
+        writer.indent = "  "
         writer.add_trailing_comma = True
 
         def dump_with_comments(db: BibDatabase, file_handle):
@@ -46,10 +52,12 @@ class Writer:
                 file_handle.write(writer.write(temp_db))
                 file_handle.write("\n")
 
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write("% bib-ami output: Verified and Accepted Entries\n\n")
             dump_with_comments(verified_db, f)
         if suspect_db.entries:
-            with open(suspect_file, 'w', encoding='utf-8') as f:
-                f.write("% bib-ami output: Suspect Entries Requiring Manual Review\n\n")
+            with open(suspect_file, "w", encoding="utf-8") as f:
+                f.write(
+                    "% bib-ami output: Suspect Entries Requiring Manual Review\n\n"
+                )
                 dump_with_comments(suspect_db, f)
