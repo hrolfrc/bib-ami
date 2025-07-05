@@ -21,17 +21,21 @@ jobs:
       - checkout
       - run:
           name: Verify critical files
+          # CORRECTED: Check for the new package structure instead of the old file.
+          # This verifies that the main package directory and its entry point exist.
           command: |
-            ls -l README.md setup.py bib_ami/bib_ami.py || exit 1
+            ls -l README.md setup.py bib_ami/__main__.py || exit 1
       - python/install-packages:
           pkg-manager: pip
-          args: pytest pytest-cov twine sphinx sphinx_rtd_theme bibtexparser requests fuzzywuzzy python-Levenshtein build
+          # Added pytest-mock for the new testing approach
+          args: pytest pytest-cov twine sphinx sphinx_rtd_theme bibtexparser requests fuzzywuzzy python-Levenshtein build pytest-mock
       - run:
           name: Verify Python version
           command: python3 --version
       - run:
           name: Run tests
-          command: pytest --cov=./ --cov-report=xml
+          # Pytest will automatically discover tests in the /tests directory
+          command: pytest --cov=bib_ami --cov-report=xml
       - run:
           name: Build documentation
           command: |
@@ -43,6 +47,8 @@ jobs:
           command: python3 -m build
       - run:
           name: Upload to PyPI
+          # This step should only run on a specific branch, e.g., main.
+          # Consider adding a filter to the job for this.
           command: python3 -m twine upload dist/* --verbose
       - store_artifacts:
           path: doc/_build/html/
@@ -51,3 +57,4 @@ jobs:
           path: coverage.xml
       - codecov/upload:
           token: CODECOV_TOKEN
+
