@@ -85,7 +85,7 @@ A robust testing environment is crucial for efficiency and clarity. All test cod
 These classes are the foundation of our test suite, allowing us to create clean, readable, and powerful tests.
 
 \begin{description}
-    \item[\texttt{TestDirectoryManager}] \hfill \\
+    \item[\texttt{BibTexTestDirectory}] \hfill \\
     \textbf{Location:} \texttt{/tests/fixtures/directory\_manager.py} \\
     \textbf{Purpose:} To programmatically create and clean up temporary directory structures for integration and E2E tests. \\
     \textbf{Responsibilities:}
@@ -149,7 +149,7 @@ Using \texttt{RecordBuilder}, test that the \texttt{Triage} class correctly clas
 \textbf{Test Case} & \textbf{Actions} \\
 \midrule
 \texttt{Ingestor -> Validator} &
-Use \texttt{TestDirectoryManager} to create a test directory and run the \texttt{Ingestor}. Assert that its output file is created. Then, feed this file to the \texttt{Validator} (using a mock API) and assert that its output file contains the correct validation statuses. \\
+Use \texttt{BibTexTestDirectory} to create a test directory and run the \texttt{Ingestor}. Assert that its output file is created. Then, feed this file to the \texttt{Validator} (using a mock API) and assert that its output file contains the correct validation statuses. \\
 \addlinespace
 \texttt{Validator -> Reconciler} &
 Create a pre-made validated JSON file containing known duplicates. Run the \texttt{Reconciler} on this file and assert that its output has the correct number of deduplicated entries and that user notes have been merged correctly. \\
@@ -171,10 +171,10 @@ Create a pre-made reconciled JSON file with a mix of record types. Run the final
 \textbf{Test Scenario} & \textbf{Actions} \\
 \midrule
 "Happy Path" Scenario &
-Use \texttt{TestDirectoryManager} to create a directory with several well-formed \texttt{.bib} files. Run the full application pipeline and assert that the final output files are created correctly and the summary report is accurate. \\
+Use \texttt{BibTexTestDirectory} to create a directory with several well-formed \texttt{.bib} files. Run the full application pipeline and assert that the final output files are created correctly and the summary report is accurate. \\
 \addlinespace
 Pathological Scenario &
-Use \texttt{TestDirectoryManager} to create a directory with a mix of broken, duplicate, and un-verifiable entries. Run the full pipeline and assert that the final output files correctly separate the valid and suspect entries, and that the summary report reflects the actions taken. \\
+Use \texttt{BibTexTestDirectory} to create a directory with a mix of broken, duplicate, and un-verifiable entries. Run the full pipeline and assert that the final output files correctly separate the valid and suspect entries, and that the summary report reflects the actions taken. \\
 \bottomrule
 \end{tabular}
 \end{table}

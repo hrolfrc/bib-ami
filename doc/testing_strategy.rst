@@ -29,7 +29,7 @@ Helper Class Descriptions
 
 These classes are the foundation of our test suite, allowing us to create clean, readable, and powerful tests.
 
-**TestDirectoryManager**
+**BibTexTestDirectory**
    :Location: ``tests/fixtures/directory_manager.py``
    :Purpose: To programmatically create and clean up temporary directory structures for integration and E2E tests.
    :Responsibilities:
@@ -85,7 +85,7 @@ Integration Tests
 | **Test Case**                    | **Actions**                                                                                                     |
 +==================================+=================================================================================================================+
 |                                  | is created. Then, feed this file to the ``Validator`` (using a mock API) and assert that its output file        |
-| ``Ingestor -> Validator``        | Use ``TestDirectoryManager`` to create a test directory and run the ``Ingestor``. Assert that its output        |
+| ``Ingestor -> Validator``        | Use ``BibTexTestDirectory`` to create a test directory and run the ``Ingestor``. Assert that its output        |
 |                                  |  contains the correct validation statuses.                                                                      |
 +----------------------------------+-----------------------------------------------------------------------------------------------------------------+
 | ``Validator -> Reconciler``      | Create a pre-made validated JSON file containing known duplicates. Run the ``Reconciler`` on this file and      |
@@ -105,11 +105,11 @@ End-to-End (E2E) Tests
 +----------------------+-----------------------------------------------------------------------------------------------------------------+
 | **Test Scenario**    | **Actions**                                                                                                     |
 +======================+=================================================================================================================+
-| "Happy Path" Scenario| Use ``TestDirectoryManager`` to create a directory with several well-formed ``.bib`` files. Run the full        |
+| "Happy Path" Scenario| Use ``BibTexTestDirectory`` to create a directory with several well-formed ``.bib`` files. Run the full        |
 |                      | application pipeline and assert that the final output files are created correctly and the summary report is     |
 |                      | accurate.                                                                                                       |
 +----------------------+-----------------------------------------------------------------------------------------------------------------+
-| Pathological Scenario| Use ``TestDirectoryManager`` to create a directory with a mix of broken, duplicate, and un-verifiable entries.  |
+| Pathological Scenario| Use ``BibTexTestDirectory`` to create a directory with a mix of broken, duplicate, and un-verifiable entries.  |
 |                      | Run the full pipeline and assert that the final output files correctly separate the valid and suspect entries,  |
 |                      | and that the summary report reflects the actions taken.                                                         |
 +----------------------+-----------------------------------------------------------------------------------------------------------------+
