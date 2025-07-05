@@ -74,7 +74,8 @@ class BibTexManager:
             doi = entry.get('verified_doi')
             if doi:
                 doi_key = doi.lower()
-                if doi_key not in doi_map: doi_map[doi_key] = []
+                if doi_key not in doi_map:
+                    doi_map[doi_key] = []
                 doi_map[doi_key].append(entry)
             else:
                 no_doi_entries.append(entry)

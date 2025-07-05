@@ -9,7 +9,7 @@ import uuid
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-# noinspection PyUnusedLocal
+# noinspection PyUnusedLocal,SpellCheckingInspection
 class BibTexSimulator:
     """
     Generates synthetic BibTeX files and directories for testing purposes.
@@ -101,8 +101,8 @@ class BibTexSimulator:
 
             file_content.extend(random.sample(all_entries, min(len(all_entries), entries_per_file - num_duplicates)))
 
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write("\n\n".join(file_content))
+            with open(file_path, "w", encoding="utf-8") as fname:
+                fname.write("\n\n".join(file_content))
 
         # Add some non-bib files to ensure they are ignored
         (self.base_dir / "notes.txt").write_text("This is not a bib file.")
