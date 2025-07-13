@@ -10,12 +10,21 @@ This is an ongoing priority that should be addressed alongside all new feature d
 
 ### Increase Test Coverage to >90%
 
-* **Goal:** To move from the current coverage level to 85--95%, ensuring all critical application logic is verified by automated tests.
+* **Goal:** To move from the current coverage level to 85–95%, ensuring all critical application logic is verified by automated tests.
 * **Strategy:**
     1.  **Target Untested Logic:** Use the Codecov report to identify modules and functions with low coverage.
     2.  **Write "Unhappy Path" Tests:** Add specific unit tests for error conditions, such as file I/O errors in the `Ingestor`, API failures in the `Validator`, and malformed entries in the `Reconciler`.
     3.  **Ensure Full Branch Coverage:** Add tests to verify that all `if/else` conditions in the `Triage` and `Reconciler` classes are executed.
     4.  **Maintain Coverage:** Configure CI (e.g., with Codecov's settings) to fail a pull request if it decreases the overall test coverage.
+
+### Refactor Pipeline for Immutable Data Flow
+
+* **Problem:** Currently, each component (`Validator`, `Refresher`, `Reconciler`) modifies the main `BibDatabase` object "in-place." This can lead to subtle side-effect bugs, where one component's changes unexpectedly break a later one (e.g., the title-refresh bug affecting the reconciler).
+* **Solution:** Refactor the `BibTexManager` and all pipeline components to follow a more functional approach. Each step should take a database object as input and return a **new, transformed database object** as output. The manager would be responsible for chaining these steps together.
+* **Benefits:** This architectural change provides:
+    * **Data Lineage:** The state of the data can be inspected at every intermediate step, making debugging trivial.
+    * **Resilience:** It completely eliminates the class of side-effect bugs we encountered.
+    * **Clarity:** The inputs and outputs for each step become explicit and easier to reason about.
 
 ---
 
@@ -30,7 +39,7 @@ These features would provide the most significant improvements in coverage and u
 
 ### 2. Add ISBN Validation for Books
 
-* **Problem:** Books are a common entry type but often lack DOIs, making them "Suspect" by default.
+* **Problem:** Books are a common entry type but often lack DOIs.
 * **Solution:** For entries of type `@book`, use the `isbn` field to query an external source like the **Google Books API** or **Open Library API**. A successful match would allow the book to be validated and its metadata refreshed.
 
 ### 3. Implement API Caching
@@ -45,5 +54,5 @@ These features would provide the most significant improvements in coverage and u
 These are smaller features that would make the tool more professional and easier to use.
 
 * **Interactive "Gleaning" Mode:** For the `suspect.bib` file, an interactive mode could present each suspect entry to the user and ask them to `[k]eep`, `[d]iscard`, or `[s]earch again with new metadata?`.
-* **Configurable Triage Rules:** Move the rules for what constitutes an "Accepted" entry (e.g., `@book`, `@techreport`) into the `bib_ami_config.json` file, allowing users to customize the triage logic.
+* **Configurable Triage Rules:** Move the rules for what constitutes an "Accepted" entry (e.g., `@book`, `@techreport`) into a configuration file, allowing users to customize the triage logic.
 * **Parallel API Requests:** The validation phase is the main bottleneck. Refactor the `Validator` to use Python's `concurrent.futures` to make multiple API requests in parallel, speeding up the process for large bibliographies.
