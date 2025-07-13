@@ -3,41 +3,44 @@
 # Contains the mock for the CrossRefClient.
 # ==============================================================================
 
-import random
-import uuid
-from typing import Dict, Any, Optional
 
-from fuzzywuzzy import fuzz
+class MockCrossRefClient:
+    """
+    A mock client that simulates the CrossRefClient for testing purposes.
 
-from bib_ami.cross_ref_client import CrossRefClient
-
-
-class MockCrossRefClient(CrossRefClient):
+    It returns canned responses based on the input to test different
+    scenarios without making real network calls.
+    """
     def __init__(self, email: str):
-        super().__init__(email)
-        self.doi_database = {
-            "attention is all you need": "10.5555/attention",
-            "a study of deep learning": "10.5555/deeplearn",
+        # The email is stored but not used in the mock.
+        self.email = email
+        self.doi_map = {
+            "Attention Is All You Need": "10.1234/attention.doi"
         }
-        self.metadata_database = {
-            "10.5555/attention": {
-                "title": "Attention Is All You Need (Canonical)"
+
+    def get_doi_for_entry(self, entry: dict) -> str or None:
+        """
+        Simulates finding a DOI based on the entry's title.
+        """
+        title = entry.get("title")
+        return self.doi_map.get(title)
+
+    # noinspection PyUnusedLocal
+    @staticmethod
+    def get_metadata_by_doi(doi: str, original_entry: dict) -> dict or None:
+        """
+        FIXED: This method now accepts the 'original_entry' keyword argument
+        to match the signature of the real CrossRefClient.
+
+        It simulates returning canonical metadata for a known DOI.
+        """
+        # We can ignore original_entry in the mock; we just need to accept it.
+        if doi == "10.1234/attention.doi":
+            # This is the "canonical" data the e2e test will check for.
+            return {
+                "title": ["Attention Is All You Need (Canonical)"],
+                "author": [{"family": "Vaswani", "given": "Ashish"}],
+                "year": "2017",
+                "journal": "Advances in Neural Information Processing Systems"
             }
-        }
-
-    def get_doi_for_entry(self, entry: Dict[str, Any]) -> Optional[str]:
-        title = entry.get("title", "").lower()
-        for key, doi in self.doi_database.items():
-            if fuzz.ratio(title, key) > 95:
-                return doi
-        # Fallback for randomized tests
-        if "random paper" in title:
-            return (
-                f"10.9999/{uuid.uuid4().hex[:6]}"
-                if random.random() < 0.75
-                else None
-            )
         return None
-
-    def get_metadata_by_doi(self, doi: str) -> Optional[Dict[str, Any]]:
-        return self.metadata_database.get(doi.lower())

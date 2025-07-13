@@ -7,9 +7,6 @@ import argparse
 import logging
 from typing import Optional
 
-import bibtexparser
-from bibtexparser.bwriter import BibTexWriter
-
 from .cross_ref_client import CrossRefClient
 from .ingestor import Ingestor
 from .metadata_refresher import MetadataRefresher
@@ -61,31 +58,25 @@ class BibTexManager:
     def process_bibliography(self):
         """
         Executes the full, integrity-first data processing pipeline.
-
-        The workflow proceeds as follows:
-        1. Ingest all source .bib files.
-        2. Handle the --merge-only flag as an early exit.
-        3. Validate every entry to get a canonical DOI.
-        4. Refresh metadata for all validated entries.
-        5. Deduplicate entries based on the verified DOIs.
-        6. Triage the processed records into 'verified' and 'suspect' groups.
-        7. Write the final, cleaned files.
         """
         # Phase 1: Ingestion
         database, num_files = self.ingestor.ingest_from_directory(
             self.settings.input_dir
         )
 
-        # Handle the --merge-only shortcut
         if self.settings.merge_only:
-            simple_writer = BibTexWriter()
-            with open(self.settings.output_file, "w", encoding="utf-8") as f:
-                bibtexparser.dump(database, f, simple_writer)
-            logging.info("Merge-only complete.")
+            self.writer.write_raw_database(database, self.settings.output_file)
+            logging.info(f"Merge-only complete. Merged {num_files} files into {self.settings.output_file}")
             return
 
         # Phase 2: Validation and Enrichment
         database, validated_count = self.validator.validate_all(database)
+
+        # Store original titles before they are changed by the refresher
+        for entry in database.entries:
+            if "title" in entry:
+                entry.setdefault("audit_info", {})["original_title"] = entry["title"]
+
         database = self.refresher.refresh_all(database)
 
         # Phase 3: Reconciliation

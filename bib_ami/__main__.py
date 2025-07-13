@@ -8,6 +8,27 @@ Its primary responsibilities are:
 3.  Initializing the main BibTexManager with the final settings.
 4.  Executing the bibliography processing workflow.
 5.  Catching and logging any critical, unhandled exceptions that occur during the process.
+
+----------------------------------------------------------------------
+To run the version of bib-ami that's in your project directory (not the one installed by Pip),
+you should call it as a module from the root of the project. This ensures you're
+always running the latest code you just saved.
+
+Use the python -m command, where -m stands for "module":
+
+python -m bib_ami [ARGUMENTS]
+
+For example, to run it with the necessary arguments, your command would look like this:
+
+python -m bib_ami --input-file my_library.bib --output-file cleaned_library.bib --email "you@example.com"
+
+Pro-Tip 💡: For the best development experience, you can install your project in "editable" mode once from the project root:
+
+pip install -e .
+
+After doing this, you can call bib-ami directly from your terminal, and it will
+always point to your source code. Any changes you make are reflected immediately
+without needing to reinstall.
 """
 
 import logging

@@ -23,17 +23,16 @@ class Triage:
         Separates a database into verified/accepted and suspect records.
 
         The logic is as follows:
-        - Any entry with a verified DOI is always considered 'Verified'.
-        - An entry without a DOI that is a book or report is considered 'Accepted'.
-        - All other entries without a DOI are considered 'Suspect'.
-        - If `filter_validated` is True, 'Accepted' entries are grouped with
-          'Suspect' entries.
+        - An entry is considered TRUSTWORTHY if it has a verified DOI OR if it is a
+          book or technical report.
+        - All other entries are considered 'Suspect'.
+        - The `filter_validated` flag is currently not used in this simplified
+          logic but is kept for potential future use where rules for other
+          entry types might be more complex.
 
         Args:
             database: The BibDatabase object containing the processed entries.
-            filter_validated: A boolean flag from the CLI that, if True,
-                changes the triage logic to only allow 'Verified' entries
-                in the main output file.
+            filter_validated: A boolean flag from the CLI.
 
         Returns:
             A tuple containing two BibDatabase objects:
@@ -43,25 +42,21 @@ class Triage:
         verified_db, suspect_db = BibDatabase(), BibDatabase()
 
         for entry in database.entries:
-            is_verified = bool(entry.get("verified_doi"))
+            is_verified_by_doi = bool(entry.get("verified_doi"))
             is_book_or_report = entry.get("ENTRYTYPE", "misc").lower() in [
                 "book",
                 "techreport",
             ]
 
-            # Case 1: The entry has a verified DOI. It's always trustworthy.
-            if is_verified:
-                entry["audit_info"]["status"] = "Verified"
+            # An entry is trustworthy if it has a DOI or if it's a book/report.
+            if is_verified_by_doi or is_book_or_report:
+                if is_verified_by_doi:
+                    entry["audit_info"]["status"] = "Verified by DOI"
+                else:
+                    entry["audit_info"]["status"] = "Accepted (Book/Report)"
                 verified_db.entries.append(entry)
-
-            # Case 2: No DOI, but it's a type we accept without one (and not filtering).
-            elif not filter_validated and is_book_or_report:
-                entry["audit_info"]["status"] = "Accepted (No DOI)"
-                verified_db.entries.append(entry)
-
-            # Case 3: All other entries are considered suspect.
-            # This includes articles without DOIs, or accepted types when filtering is on.
             else:
+                # Everything else is considered suspect.
                 entry["audit_info"]["status"] = "Suspect"
                 suspect_db.entries.append(entry)
 

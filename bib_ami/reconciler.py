@@ -1,8 +1,7 @@
-"""
-This module contains the Reconciler class, which is responsible for
-deduplicating BibTeX entries and merging user-specific metadata.
-"""
+# reconciler.py
+
 import logging
+import string
 from typing import Dict, Any, List
 
 from bibtexparser.bibdatabase import BibDatabase
@@ -12,121 +11,86 @@ from fuzzywuzzy import fuzz
 class Reconciler:
     """
     Deduplicates entries and merges metadata into a single "golden record".
-
-    This class implements a two-pass deduplication strategy:
-    1.  **DOI-based:** It first groups and merges entries that share the same
-        verified DOI. This is the most reliable method of deduplication.
-    2.  **Fuzzy Matching Fallback:** For entries that could not be verified
-        with a DOI, it performs a second pass using fuzzy string matching
-        on titles to find and remove likely duplicates.
     """
 
     def __init__(self, fuzzy_threshold=95):
-        """
-        Initializes the Reconciler.
-
-        Args:
-            fuzzy_threshold: The similarity score (0-100) required for
-                two titles to be considered a duplicate during the fuzzy
-                matching phase.
-        """
         self.fuzzy_threshold = fuzzy_threshold
 
     @staticmethod
+    def _normalize_title(title: str) -> str:
+        if not title:
+            return ""
+        return title.lower().translate(str.maketrans('', '', string.punctuation))
+
+    @staticmethod
     def _create_golden_record(group: List[Dict]) -> Dict[str, Any]:
-        """
-        Merges a group of duplicate entries into a single golden record.
-
-        It selects a "winner" from the group (the one with the most fields)
-        and then merges user-specific data (like 'note') from all other
-        duplicates into it. It also updates the audit trail.
-
-        Args:
-            group: A list of duplicate entry dictionaries.
-
-        Returns:
-            A single, merged "golden record" dictionary.
-        """
+        if not group:
+            return {}
         winner = max(group, key=len)
         golden_record = winner.copy()
-
-        # Ensure the audit trail dictionary exists before modification.
         if "audit_info" not in golden_record:
             golden_record["audit_info"] = {"changes": []}
-
         if len(group) > 1:
-            # Merge 'note' fields from all duplicates.
             notes = {e.get("note") for e in group if e.get("note")}
             if len(notes) > 1:
                 golden_record["note"] = " | ".join(sorted(list(notes)))
-                golden_record["audit_info"]["changes"].append(
-                    "Merged 'note' fields from duplicates."
-                )
-
-            # Record which original entries were merged into this one.
-            merged_ids = [e["ID"] for e in group if e["ID"] != winner["ID"]]
-            golden_record["audit_info"]["changes"].append(
-                f"Merged with duplicate entries: {', '.join(merged_ids)}."
-            )
+                golden_record["audit_info"]["changes"].append("Merged 'note' fields.")
+            merged_ids = sorted([e["ID"] for e in group if e["ID"] != winner["ID"]])
+            if merged_ids:
+                golden_record["audit_info"]["changes"].append(f"Merged with: {', '.join(merged_ids)}.")
         return golden_record
 
-    def deduplicate(self, database: BibDatabase) -> (BibDatabase, int):
-        """
-        Executes the full two-pass deduplication process.
-
-        Args:
-            database: The BibDatabase object containing entries to process.
-
-        Returns:
-            A tuple containing:
-                - The BibDatabase object with duplicates removed.
-                - An integer count of the number of duplicates that were removed.
-        """
-        initial_count = len(database.entries)
-
-        # --- Pass 1: Deduplicate by verified DOI ---
-        logging.info("Deduplicating entries based on verified DOI...")
+    @staticmethod
+    def _group_by_doi(entries: List[Dict]) -> (List[List[Dict]], List[Dict]):
+        """First pass: Groups entries by verified DOI."""
         doi_map: Dict[str, List[Dict]] = {}
         no_doi_entries: List[Dict] = []
-        for entry in database.entries:
-            doi = entry.get("verified_doi")
-            if doi:
+        for entry in entries:
+            if doi := entry.get("verified_doi"):
                 doi_key = doi.lower()
                 if doi_key not in doi_map:
                     doi_map[doi_key] = []
                 doi_map[doi_key].append(entry)
             else:
                 no_doi_entries.append(entry)
+        return list(doi_map.values()), no_doi_entries
 
-        # Create golden records for all DOI-based groups.
-        reconciled = [
-            self._create_golden_record(group) for group in doi_map.values()
-        ]
+    def _group_by_fuzzy_title(self, entries: List[Dict], initial_groups: List[List[Dict]]) -> List[List[Dict]]:
+        """Second pass: Merges remaining entries into groups using fuzzy title matching."""
+        final_groups = list(initial_groups)
+        for entry_to_check in entries:
+            # Use the original_title saved by the manager
+            original_title_to_check = entry_to_check.get("audit_info", {}).get("original_title",
+                                                                               entry_to_check.get("title"))
+            normalized_title_to_check = self._normalize_title(original_title_to_check)
 
-        # --- Pass 2: Fuzzy Matching Fallback ---
-        logging.info("Performing fuzzy matching for entries without a DOI...")
-        unique_no_doi: List[Dict] = []
-        for entry_to_check in no_doi_entries:
-            is_duplicate = False
-            for existing_entry in unique_no_doi:
-                # Compare titles for similarity.
-                if (
-                        fuzz.ratio(
-                            entry_to_check.get("title", "").lower(),
-                            existing_entry.get("title", "").lower(),
-                        )
-                        > self.fuzzy_threshold
-                ):
-                    is_duplicate = True
-                    # A more advanced implementation could merge these fuzzy matches.
-                    # For now, we keep the first one we see.
+            found_group = False
+            for group in final_groups:
+                group_leader = group[0]
+                # Use the original_title of the group leader for a fair comparison
+                original_leader_title = group_leader.get("audit_info", {}).get("original_title",
+                                                                               group_leader.get("title"))
+                existing_title = self._normalize_title(original_leader_title)
+
+                if fuzz.ratio(normalized_title_to_check, existing_title) > self.fuzzy_threshold:
+                    group.append(entry_to_check)
+                    found_group = True
                     break
-            if not is_duplicate:
-                unique_no_doi.append(entry_to_check)
 
-        reconciled.extend(unique_no_doi)
+            if not found_group:
+                final_groups.append([entry_to_check])
+        return final_groups
+
+    def deduplicate(self, database: BibDatabase) -> (BibDatabase, int):
+        """Executes the full deduplication and reconciliation process."""
+        initial_count = len(database.entries)
+
+        doi_groups, remaining_entries = self._group_by_doi(database.entries)
+        final_groups = self._group_by_fuzzy_title(remaining_entries, doi_groups)
+        reconciled = [self._create_golden_record(group) for group in final_groups]
+
         database.entries = reconciled
-
         duplicates_removed = initial_count - len(reconciled)
-        logging.info(f"Removed {duplicates_removed} duplicate entries.")
+        logging.info(
+            f"Reconciled {initial_count} entries into {len(reconciled)}, removing {duplicates_removed} duplicates.")
         return database, duplicates_removed

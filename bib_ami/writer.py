@@ -5,6 +5,7 @@ processed BibTeX databases to their final output files.
 from pathlib import Path
 from typing import Dict, Any
 
+import bibtexparser
 from bibtexparser.bibdatabase import BibDatabase
 from bibtexparser.bwriter import BibTexWriter
 
@@ -67,6 +68,26 @@ class Writer:
             if field in cleaned:
                 del cleaned[field]
         return cleaned
+
+    @staticmethod
+    def write_raw_database(database: BibDatabase, output_file: Path):
+        """
+        Writes a BibDatabase to a file without any processing, cleaning, or comments.
+        Used specifically for the --merge-only functionality.
+
+        Args:
+            database: The BibDatabase object to write.
+            output_file: The path to the output file.
+        """
+        writer = BibTexWriter()
+        writer.indent = "  "
+        writer.add_trailing_comma = True
+
+        # Ensure the parent directory exists before trying to write the file
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(output_file, "w", encoding="utf-8") as f:
+            bibtexparser.dump(database, f, writer)
 
     def write_files(
             self,
