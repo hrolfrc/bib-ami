@@ -4,16 +4,23 @@ interactions with the public CrossRef API.
 """
 
 import logging
+from datetime import datetime, timezone
 from typing import Dict, Optional, Any
 
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from .diff_utils import get_title_diff, get_authors_diff
+from .log_setup import setup_json_logger
+
 # Configure basic logging for this module.
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
+# Get the standard console logger
+logger = logging.getLogger(__name__)
 
 
 class CrossRefClient:
@@ -28,7 +35,13 @@ class CrossRefClient:
 
     BASE_URL = "https://api.crossref.org/works"
 
-    def __init__(self, email: str, timeout: int = 10, max_retries: int = 3):
+    def __init__(
+            self,
+            email: str,
+            timeout: int = 10,
+            max_retries: int = 3,
+            results_log_file: str = "crossref_results.jsonl"
+    ):
         """
         Initializes the CrossRefClient.
 
@@ -46,6 +59,8 @@ class CrossRefClient:
         self.email = email
         self.timeout = timeout
         self.session = self._create_session(max_retries)
+
+        self.results_logger = setup_json_logger('results_logger', results_log_file)
 
     def _create_session(self, max_retries: int) -> requests.Session:
         """
@@ -137,18 +152,71 @@ class CrossRefClient:
             logging.error(f"Request failed for title '{title}': {e}")
             return None
 
-    def get_metadata_by_doi(self, doi: str) -> Optional[Dict[str, Any]]:
+    def get_metadata_by_doi(self, doi: str, original_entry: dict) -> Optional[dict]:
         """
-        Fetches the full bibliographic metadata for a given DOI.
+        Fetches metadata for a given DOI and logs a rich diff of the result.
 
-        (Note: This method is a placeholder and needs to be implemented.)
+        This method leverages the client's session to ensure robust request
+        handling with retries.
 
         Args:
-            doi: The DOI to look up.
+            doi: The DOI string to query.
+            original_entry: The original BibTeX entry dictionary for comparison.
+                            Expected to have 'title' and 'author' keys.
 
         Returns:
-            A dictionary containing the canonical metadata, or None if not found.
+            The metadata message from CrossRef as a dictionary, or None if the
+            request fails.
         """
-        # This is the placeholder for the Priority 1 feature from the roadmap.
-        # The real implementation would make a GET request to `self.BASE_URL + / + doi`.
-        raise NotImplementedError
+        # Construct the full URL for the specific work
+        url = f"{self.BASE_URL}/{doi}"
+
+        # Prepare the payload for structured logging
+        log_payload = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "doi": doi,
+            "query_url": url,
+            "original_entry": {
+                "title": original_entry.get("title", ""),
+                "authors": original_entry.get("author", "").split(' and ')
+            }
+        }
+
+        try:
+            response = self.session.get(url, timeout=self.timeout)
+            response.raise_for_status()  # Raises HTTPError for bad responses
+
+            data = response.json()['message']
+
+            # Prepare data for diffing and logging
+            retrieved_title = " ".join(data.get('title', []))
+            retrieved_authors = [
+                f"{author.get('given', '')} {author.get('family', '')}".strip()
+                for author in data.get('author', [])
+            ]
+
+            log_payload.update({
+                "status": "SUCCESS",
+                "retrieved_entry": {
+                    "title": retrieved_title,
+                    "authors": retrieved_authors
+                },
+                "diff": {
+                    "title_diff": get_title_diff(log_payload["original_entry"]["title"], retrieved_title),
+                    "authors_diff": get_authors_diff(log_payload["original_entry"]["authors"], retrieved_authors)
+                }
+            })
+            self.results_logger.info(log_payload)
+
+            logger.info(f"Successfully retrieved and logged metadata for DOI: {doi}")
+            return data
+
+        except requests.exceptions.RequestException as e:
+            log_payload.update({
+                "status": "FAILURE",
+                "error_message": str(e)
+            })
+            self.results_logger.info(log_payload)
+            logger.error(f"Failed to retrieve metadata for DOI: {doi}. Error: {e}")
+            # We return None to signal failure, consistent with get_doi_for_entry
+            return None
