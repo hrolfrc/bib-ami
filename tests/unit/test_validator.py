@@ -47,36 +47,43 @@ class TestValidatorUnit(unittest.TestCase):
         self.assertIsNone(result)
         self.mock_client.get_doi_for_entry.assert_not_called()
 
-    def test_validate_entry_for_article_with_found_doi(self):
+    def test_validate_entry_for_article_with_found_and_resolvable_doi(self):
         """
-        Rule 2: A standard entry should call the client, which finds a DOI.
+        Rule 2: A standard entry should call the client, which finds a DOI
+        that successfully resolves.
         """
-        # Arrange
         article = RecordBuilder("article1").with_title("An Article").build()
         expected_doi = "10.1234/article.doi"
         self.mock_client.get_doi_for_entry.return_value = expected_doi
 
-        # Act
+        # --- NEW: Configure the mock for the doi.org check ---
+        mock_head_response = MagicMock()
+        mock_head_response.status_code = 302  # Simulate a successful redirect
+        self.mock_client.session.head.return_value = mock_head_response
+
         result = self.validator._validate_entry(article)
 
-        # Assert
         self.assertEqual(result, expected_doi)
         self.mock_client.get_doi_for_entry.assert_called_once_with(article)
+        self.mock_client.session.head.assert_called_once()
 
-    def test_validate_entry_for_article_with_no_doi_found(self):
+    def test_validate_entry_for_article_with_unresolvable_doi(self):
         """
-        Rule 3: A standard entry should call the client, which does not find a DOI.
+        Rule 3: The client finds a DOI, but it does not resolve (e.g., 404).
         """
-        # Arrange
         article = RecordBuilder("article2").with_title("Another Article").build()
-        self.mock_client.get_doi_for_entry.return_value = None
+        self.mock_client.get_doi_for_entry.return_value = "10.5678/bad.doi"
 
-        # Act
+        # --- NEW: Configure the mock for a FAILED doi.org check ---
+        mock_head_response = MagicMock()
+        mock_head_response.status_code = 404  # Simulate Not Found
+        self.mock_client.session.head.return_value = mock_head_response
+
         result = self.validator._validate_entry(article)
 
-        # Assert
         self.assertIsNone(result)
         self.mock_client.get_doi_for_entry.assert_called_once_with(article)
+        self.mock_client.session.head.assert_called_once()
 
 
 if __name__ == '__main__':

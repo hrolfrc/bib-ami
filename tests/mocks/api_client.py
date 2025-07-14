@@ -1,46 +1,51 @@
-# ==============================================================================
-# File: tests/mocks/api_client.py
-# Contains the mock for the CrossRefClient.
-# ==============================================================================
+# tests/mocks/api_client.py
+
+from unittest.mock import MagicMock
 
 
+# noinspection PyUnusedLocal
 class MockCrossRefClient:
     """
     A mock client that simulates the CrossRefClient for testing purposes.
-
-    It returns canned responses based on the input to test different
-    scenarios without making real network calls.
+    It now includes a mock session to handle DOI resolution checks.
     """
+
     def __init__(self, email: str):
-        # The email is stored but not used in the mock.
         self.email = email
         self.doi_map = {
             "Attention Is All You Need": "10.1234/attention.doi"
         }
 
+        # --- NEW: Create a mock session object ---
+        self.session = MagicMock()
+        # Configure the 'head' method of the mock session to call our helper
+        self.session.head.side_effect = self._mock_head_request
+
+    @staticmethod
+    def _mock_head_request(url, **kwargs):
+        """Simulates the response from a HEAD request to doi.org."""
+        mock_response = MagicMock()
+
+        # We'll pretend that the DOI for the "Attention" paper is the only valid one.
+        if "10.1234/attention.doi" in url:
+            mock_response.status_code = 302  # Simulate a successful redirect
+        else:
+            mock_response.status_code = 404  # Simulate Not Found for any other DOI
+
+        return mock_response
+
     def get_doi_for_entry(self, entry: dict) -> str or None:
-        """
-        Simulates finding a DOI based on the entry's title.
-        """
+        """Simulates finding a DOI based on the entry's title."""
         title = entry.get("title")
         return self.doi_map.get(title)
 
-    # noinspection PyUnusedLocal
     @staticmethod
     def get_metadata_by_doi(doi: str, original_entry: dict) -> dict or None:
-        """
-        FIXED: This method now accepts the 'original_entry' keyword argument
-        to match the signature of the real CrossRefClient.
-
-        It simulates returning canonical metadata for a known DOI.
-        """
-        # We can ignore original_entry in the mock; we just need to accept it.
+        """Simulates returning canonical metadata for a known DOI."""
         if doi == "10.1234/attention.doi":
-            # This is the "canonical" data the e2e test will check for.
             return {
                 "title": ["Attention Is All You Need (Canonical)"],
                 "author": [{"family": "Vaswani", "given": "Ashish"}],
-                "year": "2017",
-                "journal": "Advances in Neural Information Processing Systems"
+                "year": "2017"
             }
         return None
