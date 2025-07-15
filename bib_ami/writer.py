@@ -131,7 +131,7 @@ class Writer:
             dump_with_comments(verified_db, f)
 
         # Write the suspect file only if there are suspect entries.
-        if suspect_db.entries:
+        if suspect_db.entries and suspect_file:
             with open(suspect_file, "w", encoding="utf-8") as f:
                 f.write(
                     "% bib-ami output: Suspect Entries Requiring Manual Review\n\n"

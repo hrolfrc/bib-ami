@@ -91,17 +91,19 @@ class CLIParser:
             if settings.get(key) is None:
                 settings[key] = value
 
+        if settings.get("suspect_file") is None:
+            output_file = settings.get("output_file")
+            if output_file:
+                base_name = output_file.stem
+                suffix = output_file.suffix
+                default_name = f"{base_name}.suspect{suffix}"
+                settings["suspect_file"] = output_file.parent / default_name
+                logging.info(f"No suspect file path provided. Defaulting to: {settings['suspect_file']}")
+
         # Final validation to ensure the application can run correctly.
         if not settings.get("email"):
             self.parser.error(
                 "An email address is required. Provide it via --email or in the config file."
-            )
-
-        if settings.get("filter_validated") and not settings.get(
-            "suspect_file"
-        ):
-            self.parser.error(
-                "--suspect-file is required when using --filter-validated."
             )
 
         return argparse.Namespace(**settings)
