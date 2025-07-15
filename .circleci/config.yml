@@ -95,7 +95,3 @@ workflows:
             - codecov
           requires:
             - integration-test
-          filters:
-            branches:
-              only:
-                - master
