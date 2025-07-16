@@ -29,7 +29,8 @@ class CLIParser:
         """A simple wrapper around argparse's parse_args."""
         return self.parser.parse_args()
 
-    def _setup_run_parser(self, subparsers):
+    @staticmethod
+    def _setup_run_parser(subparsers):
         """Defines the arguments for the main bibliography processing workflow."""
         run_parser = subparsers.add_parser("run",
                                            help="Run the main bibliography workflow (this is the default action).",
@@ -43,31 +44,57 @@ class CLIParser:
         run_parser.add_argument("--email", type=str, help="Email for CrossRef API Polite Pool.")
         # Add other 'run' specific flags here in the future
 
-    def _setup_config_parser(self, subparsers):
+    @staticmethod
+    def _setup_config_parser(subparsers):
         """Defines the new 'config' sub-command and its actions (set, get, list)."""
         config_parser = subparsers.add_parser("config", help="Manage default settings in the user config file.")
         config_actions = config_parser.add_subparsers(dest="action", required=True, help="Configuration actions")
 
+        # 'set' action
         set_parser = config_actions.add_parser("set", help="Set a default value.")
         set_parser.add_argument("key", type=str, help="The configuration key (e.g., 'email').")
         set_parser.add_argument("value", type=str, help="The value to set.")
 
-        config_actions.add_parser("get", help="Get a default value. (Not yet implemented)")
-        config_actions.add_parser("list", help="List all default values. (Not yet implemented)")
+        # 'get' action - now with an argument
+        get_parser = config_actions.add_parser("get", help="Get a default value.")
+        get_parser.add_argument("key", type=str, help="The configuration key to retrieve.")
+
+        # 'list' action
+        config_actions.add_parser("list", help="List all default values.")
 
     def handle_config_command(self, args: argparse.Namespace):
         """Handles the logic for the 'config' sub-command."""
         config_path = Path.home() / ".config" / "bib-ami" / "config.json"
 
+        # Ensure config exists for get/list but don't error if it doesn't
+        config = {}
+        if config_path.exists():
+            with open(config_path, "r") as f:
+                try:
+                    config = json.load(f)
+                except json.JSONDecodeError:
+                    print(f"Warning: Config file at {config_path} is corrupted.")
+                    return  # Exit gracefully
+
         if args.action == "set":
             self._set_config_value(config_path, args.key, args.value)
-            print(f"Success: Set '{args.key}' to '{args.value}' in {config_path}")
-        else:
-            print(f"Action '{args.action}' is not yet implemented.")
+            print(f"Success: Set '{args.key}' in {config_path}")
 
-        # In bib_ami/cli.py
+        elif args.action == "get":
+            value = config.get(args.key)
+            if value:
+                print(value)
+            else:
+                print(f"Key '{args.key}' not found in configuration.")
 
-    def _set_config_value(self, config_path: Path, key: str, value: Any):
+        elif args.action == "list":
+            if config:
+                print(json.dumps(config, indent=2))
+            else:
+                print(f"No configuration found at {config_path}")
+
+    @staticmethod
+    def _set_config_value(config_path: Path, key: str, value: Any):
         """Reads, updates, and writes a key-value pair to the JSON config file."""
         config = {}
         # Check if the file exists first.
@@ -78,7 +105,6 @@ class CLIParser:
                 except json.JSONDecodeError:
                     logging.warning(f"Config file at {config_path} is corrupted. It will be overwritten.")
                     config = {}
-        # --- NEW LOGIC: Only create the directory if the file does NOT exist ---
         else:
             config_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -113,7 +139,8 @@ class CLIParser:
 
         return argparse.Namespace(**settings)
 
-    def _load_config(self, config_path: Path) -> Dict[str, Any]:
+    @staticmethod
+    def _load_config(config_path: Path) -> Dict[str, Any]:
         # This can be expanded to search the full hierarchy later
         if config_path and config_path.exists():
             try:

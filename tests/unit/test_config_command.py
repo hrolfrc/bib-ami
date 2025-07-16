@@ -106,3 +106,63 @@ class TestConfigCommand(unittest.TestCase):
         # Check that the nested structure was created correctly
         self.assertIn("triage_rules", final_config)
         self.assertEqual(final_config["triage_rules"]["min_quality_for_final_bib"], "Verified")
+
+    @patch("pathlib.Path.home", return_value=Path("/fake/home"))
+    @patch("pathlib.Path.exists", return_value=True)
+    @patch("builtins.open", new_callable=mock_open, read_data='{"email": "test@example.com"}')
+    @patch("builtins.print")
+    def test_config_get_retrieves_value(self, mock_print, mock_file, mock_exists, mock_home):
+        """Tests that `config get` correctly retrieves and prints an existing value."""
+        mock_argv = ['__main__', 'config', 'get', 'email']
+        with patch('sys.argv', mock_argv):
+            parser = CLIParser()
+            args = parser.parse_args()
+            parser.handle_config_command(args)
+
+        mock_print.assert_called_once_with("test@example.com")
+
+    @patch("pathlib.Path.home", return_value=Path("/fake/home"))
+    @patch("pathlib.Path.exists", return_value=True)
+    @patch("builtins.open", new_callable=mock_open, read_data='{"email": "test@example.com"}')
+    @patch("builtins.print")
+    def test_config_get_handles_missing_key(self, mock_print, mock_file, mock_exists, mock_home):
+        """Tests that `config get` prints a message for a non-existent key."""
+        mock_argv = ['__main__', 'config', 'get', 'nonexistent_key']
+        with patch('sys.argv', mock_argv):
+            parser = CLIParser()
+            args = parser.parse_args()
+            parser.handle_config_command(args)
+
+        mock_print.assert_called_once_with("Key 'nonexistent_key' not found in configuration.")
+
+    @patch("pathlib.Path.home", return_value=Path("/fake/home"))
+    @patch("pathlib.Path.exists", return_value=True)
+    @patch("builtins.open", new_callable=mock_open, read_data='{"email": "test@example.com", "fuzzy_threshold": 90}')
+    @patch("builtins.print")
+    def test_config_list_prints_all_settings(self, mock_print, mock_file, mock_exists, mock_home):
+        """Tests that `config list` prints the entire configuration as formatted JSON."""
+        mock_argv = ['__main__', 'config', 'list']
+        with patch('sys.argv', mock_argv):
+            parser = CLIParser()
+            args = parser.parse_args()
+            parser.handle_config_command(args)
+
+        # Assert that print was called and that its output is valid, complete JSON
+        mock_print.assert_called_once()
+        printed_output = mock_print.call_args[0][0]
+        parsed_output = json.loads(printed_output)
+        self.assertEqual(parsed_output, {"email": "test@example.com", "fuzzy_threshold": 90})
+
+    @patch("pathlib.Path.home", return_value=Path("/fake/home"))
+    @patch("pathlib.Path.exists", return_value=False)
+    @patch("builtins.print")
+    def test_config_list_handles_no_file(self, mock_print, mock_exists, mock_home):
+        """Tests that `config list` prints a clean message if no config file exists."""
+        mock_argv = ['__main__', 'config', 'list']
+        with patch('sys.argv', mock_argv):
+            parser = CLIParser()
+            args = parser.parse_args()
+            parser.handle_config_command(args)
+
+        config_path = Path("/fake/home") / ".config" / "bib-ami" / "config.json"
+        mock_print.assert_called_once_with(f"No configuration found at {config_path}")
